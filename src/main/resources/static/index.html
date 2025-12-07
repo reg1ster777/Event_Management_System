@@ -1,3 +1,278 @@
-<!doctype html><meta charset="utf-8">
-<title>ProgramDesignB</title>
-<h1>系统已启动 √</h1><p>这是演示首页。</p>
+<!-- src/main/resources/static/index.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>高校学生活动全流程管理系统 - 首页</title>
+    <style>
+        /* 整体布局样式 */
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            background: linear-gradient(135deg, #f5f7ff, #fefefe);
+            color: #222;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 18px 32px;
+            background: #1677ff;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        header .title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        header .subtitle {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 16px;
+        }
+
+        .container {
+            max-width: 960px;
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .intro {
+            flex: 1 1 300px;
+            padding: 16px;
+        }
+
+        .intro h1 {
+            font-size: 26px;
+            margin: 0 0 12px;
+        }
+
+        .intro p {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.6;
+            margin: 0 0 8px;
+        }
+
+        .tag-list {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: rgba(22, 119, 255, 0.08);
+            color: #1677ff;
+        }
+
+        .cards {
+            flex: 1 1 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px 18px 16px;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .card-desc {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 8px 14px;
+            font-size: 13px;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .btn-primary {
+            background: #1677ff;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #165fcc;
+            box-shadow: 0 4px 10px rgba(22, 119, 255, 0.35);
+        }
+
+        .btn-outline {
+            background: #fff;
+            color: #1677ff;
+            border: 1px solid #1677ff;
+        }
+
+        .btn-outline:hover {
+            background: rgba(22, 119, 255, 0.06);
+        }
+
+        .status {
+            font-size: 12px;
+            color: #777;
+            margin-top: 8px;
+        }
+
+        .status span {
+            font-weight: 500;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 12px;
+            color: #aaa;
+            padding: 10px 0 14px;
+        }
+
+        code {
+            background: #f2f2f2;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 16px 10px;
+            }
+
+            .container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="title">高校学生活动全流程管理系统</div>
+    <div class="subtitle">Spring Boot + MySQL · 支持活动发布、报名、签到与后台管理</div>
+</header>
+
+<main>
+    <div class="container">
+        <!-- 左侧介绍区域 -->
+        <section class="intro">
+            <h1>欢迎使用活动管理系统</h1>
+            <p>
+                本系统面向高校场景，提供从 <strong>活动创建 → 在线报名 → 现场签到 → 结果统计</strong> 的一体化管理流程。
+            </p>
+            <p>
+                当前已实现的核心能力包括：
+                管理员登录与管理、活动增删改查、学生在线报名、签到记录查询等。
+            </p>
+            <div class="tag-list">
+                <div class="tag">活动管理</div>
+                <div class="tag">在线报名</div>
+                <div class="tag">签到统计</div>
+                <div class="tag">Spring Boot</div>
+                <div class="tag">MyBatis + MySQL</div>
+            </div>
+        </section>
+
+        <!-- 右侧功能入口卡片 -->
+        <section class="cards">
+            <!-- 管理员入口 -->
+            <div class="card">
+                <div class="card-title">管理员入口</div>
+                <div class="card-desc">
+                    面向学院老师或学生会负责人，用于创建与维护活动信息，查看报名情况与签到数据。
+                </div>
+                <div class="btn-row">
+                    <!-- 假设你刚才的登录页面叫 login.html -->
+                    <a href="/login.html" class="btn btn-primary">管理员登录</a>
+                </div>
+                <div class="status">登录接口：<code>POST /admin/login</code></div>
+            </div>
+
+            <!-- 活动与报名入口（预留给学生端，可以后续扩展） -->
+            <div class="card">
+                <div class="card-title">学生入口（示意）</div>
+                <div class="card-desc">
+                    学生可查看当前开放的活动信息，并在线提交报名。此处可继续扩展为单独的前端页面。
+                </div>
+                <div class="btn-row">
+                    <!-- 目前先简单跳到 /activities，看到 JSON 即可 -->
+                    <a href="/activities" class="btn btn-outline">查看活动列表（JSON）</a>
+                    <!-- 未来可以做一个真正的活动列表页面，如 activities.html -->
+                    <!-- <a href="/activities.html" class="btn btn-primary">图形化活动列表</a> -->
+                </div>
+                <div class="status">活动列表接口：<code>GET /activities</code></div>
+            </div>
+
+            <!-- 系统状态小卡片：简单检测后端是否正常 -->
+            <div class="card">
+                <div class="card-title">系统状态</div>
+                <div class="card-desc">
+                    下方会尝试调用 <code>GET /activities</code> 接口，检测后端是否正常运行及数据库连接是否正常。
+                </div>
+                <div id="health-status" class="status">检测中...</div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<footer>
+    &copy; 2025 高校学生活动全流程管理系统 · 后端：Spring Boot &nbsp;|&nbsp; 数据库：MySQL
+</footer>
+
+<script>
+    // 简单检测 /activities 接口，看后端与数据库是否正常
+    (async function checkBackendHealth() {
+        const el = document.getElementById('health-status');
+        try {
+            const res = await fetch('/activities', { method: 'GET' });
+            if (res.ok) {
+                const data = await res.json();
+                const count = Array.isArray(data) ? data.length : 0;
+                el.innerHTML = `后端接口正常，可用活动数量：<span>${count}</span> 条。`;
+            } else {
+                el.innerHTML = `后端接口返回状态码：<span>${res.status}</span>，请检查日志。`;
+            }
+        } catch (e) {
+            console.error(e);
+            el.innerHTML = '无法连接到后端，请确认应用是否已启动、数据库配置是否正确。';
+        }
+    })();
+</script>
+</body>
+</html>

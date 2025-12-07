@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>管理员后台 - 活动管理</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            background: #f5f5f5;
+        }
+
+        header {
+            padding: 16px 32px;
+            background: #1677ff;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        header .left {
+            display: flex;
+            flex-direction: column;
+        }
+
+        header .title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        header .subtitle {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        header .nav-links a {
+            color: #fff;
+            font-size: 13px;
+            margin-left: 14px;
+            text-decoration: none;
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        header .nav-links a:hover {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        main {
+            padding: 20px 32px 32px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 2fr 1.2fr;
+            grid-gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 16px 18px 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .card-desc {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .toolbar .info {
+            font-size: 12px;
+            color: #777;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .btn-primary {
+            background: #1677ff;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #165fcc;
+            box-shadow: 0 4px 10px rgba(22, 119, 255, 0.35);
+        }
+
+        .btn-outline {
+            background: #fff;
+            color: #1677ff;
+            border: 1px solid #1677ff;
+        }
+
+        .btn-outline:hover {
+            background: rgba(22, 119, 255, 0.06);
+        }
+
+        .btn-danger {
+            background: #ff4d4f;
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #d9363e;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #fafafa;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #fafafa;
+        }
+
+        .tag-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+        }
+
+        .tag-status.unpublished {
+            background: #f5f5f5;
+            color: #555;
+        }
+
+        .tag-status.signing {
+            background: #e6f4ff;
+            color: #1677ff;
+        }
+
+        .tag-status.closed {
+            background: #fff2e8;
+            color: #fa8c16;
+        }
+
+        .tag-status.finished {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+
+        .message {
+            margin-top: 6px;
+            font-size: 12px;
+            min-height: 16px;
+        }
+
+        .message.error {
+            color: #d93025;
+        }
+
+        .message.success {
+            color: #0b9a42;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px 8px;
+            font-size: 13px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.15);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .hint {
+            font-size: 11px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .muted {
+            color: #999;
+            font-size: 12px;
+        }
+
+        /* ç”¨äºŽåªè¯»æ˜¾ç¤ºçš„åˆ›å»ºè€…ç”¨æˆ·åï¼Œä½¿ç”¨ç°è‰²è¡¨æ˜Žä¸å¯ä¿®æ”¹ */
+        .readonly-field {
+            color: #888;
+            background: #f8f8f8;
+        }
+
+        /* 详情弹窗 */
+        .modal-mask {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px 20px;
+            width: min(520px, 90vw);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            border: 1px solid #eee;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            border: none;
+            background: transparent;
+            font-size: 18px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .detail-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .detail-list li {
+            padding: 6px 0;
+            border-bottom: 1px solid #f3f3f3;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .detail-key {
+            color: #555;
+            width: 120px;
+            flex-shrink: 0;
+        }
+
+        .detail-value {
+            color: #333;
+            word-break: break-word;
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="left">
+        <div class="title">管理员后台 · 活动管理</div>
+        <div class="subtitle">查看活动列表 · 创建新活动 · 管理活动状态</div>
+    </div>
+    <div class="nav-links">
+        <a href="/index.html">返回首页</a>
+        <a href="/login.html">重新登录</a>
+    </div>
+</header>
+
+<main>
+    <div class="layout">
+        <!-- 左：活动列表 -->
+        <section class="card">
+            <div class="card-title">活动列表</div>
+            <div class="card-desc">
+                这里展示当前所有活动信息，支持按状态查看、刷新列表。后续可扩展编辑、查看报名等功能。
+            </div>
+
+            <div class="toolbar">
+                <div class="info" id="activities-summary">正在加载活动列表...</div>
+                <div>
+                    <button class="btn btn-outline" id="refresh-btn">刷新列表</button>
+                </div>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>活动名称</th>
+                        <th>类型</th>
+                        <th>时间</th>
+                        <th>地点</th>
+                        <th>状态</th>
+                        <th>报名人数上限</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="activities-tbody">
+                    <!-- JS 动态填充 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="list-message" class="message"></div>
+        </section>
+
+        <!-- 右：新建活动 -->
+        <section class="card">
+            <div class="card-title">新建活动</div>
+            <div class="card-desc">
+                管理员可以在此创建新的活动，填写基本信息后提交，将通过 <code>POST /activities</code> 写入数据库。
+            </div>
+
+            <form id="create-form">
+                <!-- 创建人：从登录信息自动获取，显示用户名，不可修改 -->
+                <div class="form-group">
+                    <label>创建人 *</label>
+                    <!-- 只读显示用户名 -->
+                    <input id="creatorUsername" type="text" readonly class="readonly-field">
+                    <!-- 隐藏保存 userId，提交时用这个 -->
+                    <input id="createdById" type="hidden">
+                    <div class="hint">从当前登录管理员信息自动获取，无法修改。</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="title">活动名称 *</label>
+                    <input id="title" name="title" type="text" required placeholder="请输入活动名称">
+                </div>
+
+
+                <div class="form-group">
+                    <label for="type">活动类型 *</label>
+                    <select id="type" name="type" required>
+                        <option value="">请选择</option>
+                        <option value="讲座">讲座</option>
+                        <option value="宣讲会">宣讲会</option>
+                        <option value="就业指导">就业指导</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">活动地点 *</label>
+                    <input id="location" name="location" type="text" required placeholder="例如：南校区教学楼101">
+                </div>
+
+                <div class="form-group">
+                    <label for="startTime">开始时间 *</label>
+                    <input id="startTime" name="startTime" type="datetime-local" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="endTime">结束时间 *</label>
+                    <input id="endTime" name="endTime" type="datetime-local" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="signupEndTime">报名截止时间 *</label>
+                    <input id="signupEndTime" name="signupEndTime" type="datetime-local" required>
+                    <div class="hint">建议设为活动开始前一天的 23:59。</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="maxParticipants">最大报名人数 *</label>
+                    <input id="maxParticipants" name="maxParticipants" type="number" min="1" required value="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="status">初始状态 *</label>
+                    <select id="status" name="status" required>
+                        <option value="未发布" selected>未发布</option>
+                        <option value="报名中">报名中</option>
+                        <option value="已截止">已截止</option>
+                        <option value="已结束">已结束</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">活动简介（可选）</label>
+                    <textarea id="description" name="description" placeholder="简要介绍活动内容、主讲人、面向对象等"></textarea>
+                </div>
+
+                <button type="submit" id="create-btn" class="btn btn-primary" style="width: 100%; margin-top: 4px;">
+                    提交新活动
+                </button>
+
+                <div id="create-message" class="message"></div>
+
+                <div class="muted" style="margin-top: 6px;">
+                    说明：本页面使用原生 JavaScript 通过 <code>fetch</code> 调用后端 REST 接口，无需额外前端框架，仅用于课程实验演示。
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
+
+<!-- 详情弹窗 -->
+<div id="detail-modal-mask" class="modal-mask">
+    <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <div class="modal-title">活动详情</div>
+            <button class="modal-close" aria-label="关闭" onclick="closeDetailModal()">&times;</button>
+        </div>
+        <ul class="detail-list" id="detail-list">
+            <li>正在加载...</li>
+        </ul>
+        <div id="detail-message" class="message"></div>
+    </div>
+</div>
+
+<script>
+    const activitiesTbody = document.getElementById('activities-tbody');
+    const activitiesSummary = document.getElementById('activities-summary');
+    const listMessage = document.getElementById('list-message');
+    const refreshBtn = document.getElementById('refresh-btn');
+
+    const createForm = document.getElementById('create-form');
+    const createBtn = document.getElementById('create-btn');
+    const createMessage = document.getElementById('create-message');
+    const detailModalMask = document.getElementById('detail-modal-mask');
+    const detailList = document.getElementById('detail-list');
+    const detailMessage = document.getElementById('detail-message');
+
+    // 登录态：当前管理员信息
+    let currentUser = null;
+
+    // 尝试从 localStorage 中读取登录时保存的管理员信息
+    function initCurrentUser() {
+        const stored = localStorage.getItem('adminUser');
+        if (!stored) {
+            alert('未检测到登录信息，请先登录管理员账号。');
+            window.location.href = '/login.html';
+            return;
+        }
+        try {
+            currentUser = JSON.parse(stored);
+        } catch (e) {
+            console.error(e);
+            alert('登录信息解析失败，请重新登录。');
+            window.location.href = '/login.html';
+            return;
+        }
+
+        // 把用户名显示在“创建人”输入框中，并设置隐藏的 userId
+        const creatorUsernameInput = document.getElementById('creatorUsername');
+        const createdByIdInput = document.getElementById('createdById');
+
+        if (creatorUsernameInput && createdByIdInput) {
+            creatorUsernameInput.value = currentUser.username || '';
+            createdByIdInput.value = currentUser.userId != null ? currentUser.userId : '';
+        }
+
+        // 也可以顺便在页面别的地方显示当前管理员
+        // 例如 header 右上角显示 “当前管理员：xxx”
+    }
+
+    function showListMessage(text, type) {
+        listMessage.textContent = text || '';
+        listMessage.className = 'message';
+        if (type === 'error') listMessage.classList.add('error');
+        if (type === 'success') listMessage.classList.add('success');
+    }
+
+    function showCreateMessage(text, type) {
+        createMessage.textContent = text || '';
+        createMessage.className = 'message';
+        if (type === 'error') createMessage.classList.add('error');
+        if (type === 'success') createMessage.classList.add('success');
+    }
+
+    function formatDateTime(dt) {
+        if (!dt) return '';
+        try {
+            // 如果后端返回的是 ISO 字符串，简单截断到 分钟部分
+            return dt.toString().replace('T', ' ').substring(0, 16);
+        } catch (e) {
+            return dt;
+        }
+    }
+
+    function renderStatusTag(status) {
+        let cls = 'unpublished';
+        if (status === '报名中') cls = 'signing';
+        else if (status === '已截止') cls = 'closed';
+        else if (status === '已结束') cls = 'finished';
+
+        return `<span class="tag-status ${cls}">${status || ''}</span>`;
+    }
+
+    function openDetailModal() {
+        detailModalMask.style.display = 'flex';
+    }
+
+    function closeDetailModal() {
+        detailModalMask.style.display = 'none';
+        detailMessage.textContent = '';
+        detailList.innerHTML = '';
+    }
+
+    function renderDetail(data) {
+        const startEnd = formatDateTime(data.startTime) + ' ~ ' + formatDateTime(data.endTime);
+        const signupEnd = formatDateTime(data.signupEndTime);
+        const createdTime = formatDateTime(data.createdTime);
+
+        detailList.innerHTML = `
+            <li><span class="detail-key">ID</span><span class="detail-value">${data.activityId ?? ''}</span></li>
+            <li><span class="detail-key">活动名称</span><span class="detail-value">${data.title || ''}</span></li>
+            <li><span class="detail-key">类型</span><span class="detail-value">${data.type || ''}</span></li>
+            <li><span class="detail-key">时间</span><span class="detail-value">${startEnd}</span></li>
+            <li><span class="detail-key">地点</span><span class="detail-value">${data.location || ''}</span></li>
+            <li><span class="detail-key">状态</span><span class="detail-value">${data.status || ''}</span></li>
+            <li><span class="detail-key">报名截止</span><span class="detail-value">${signupEnd}</span></li>
+            <li><span class="detail-key">报名上限</span><span class="detail-value">${data.maxParticipants ?? ''}</span></li>
+            <li><span class="detail-key">创建人ID</span><span class="detail-value">${data.createdBy ?? ''}</span></li>
+            <li><span class="detail-key">创建时间</span><span class="detail-value">${createdTime}</span></li>
+            <li><span class="detail-key">简介</span><span class="detail-value">${data.description || ''}</span></li>
+            <li><span class="detail-key">报名链接</span><span class="detail-value"><a href="/register.html?activityId=${data.activityId ?? ''}" target="_blank">打开报名页</a></span></li>
+        `;
+    }
+
+    async function viewActivityDetail(id) {
+        openDetailModal();
+        detailMessage.textContent = '';
+        detailList.innerHTML = '<li>正在加载...</li>';
+
+        try {
+            const res = await fetch('/activities/' + id, { method: 'GET' });
+            if (!res.ok) {
+                detailMessage.textContent = '加载详情失败，状态码：' + res.status;
+                return;
+            }
+            const data = await res.json();
+            renderDetail(data || {});
+        } catch (e) {
+            console.error(e);
+            detailMessage.textContent = '请求详情失败，请检查网络或后端服务。';
+        }
+    }
+
+    async function loadActivities() {
+        activitiesSummary.textContent = '正在加载活动列表...';
+        showListMessage('', '');
+        activitiesTbody.innerHTML = '';
+
+        try {
+            const res = await fetch('/activities', { method: 'GET' });
+            if (!res.ok) {
+                activitiesSummary.textContent = '加载失败，状态码：' + res.status;
+                showListMessage('无法获取活动列表，请检查后端接口 /activities 是否正常。', 'error');
+                return;
+            }
+
+            const data = await res.json();
+            const list = Array.isArray(data) ? data : [];
+
+            if (list.length === 0) {
+                activitiesSummary.textContent = '当前暂无活动记录。';
+                activitiesTbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">暂无活动，请在右侧创建新活动。</td></tr>';
+                return;
+            }
+
+            activitiesSummary.textContent = '共 ' + list.length + ' 条活动。';
+
+            const rows = list.map(item => {
+                const startEnd = formatDateTime(item.startTime) + ' ~ ' + formatDateTime(item.endTime);
+                const statusHtml = renderStatusTag(item.status);
+
+                return `
+                    <tr>
+                        <td>${item.activityId}</td>
+                        <td>${item.title || ''}</td>
+                        <td>${item.type || ''}</td>
+                        <td>${startEnd}</td>
+                        <td>${item.location || ''}</td>
+                        <td>${statusHtml}</td>
+                        <td>${item.maxParticipants != null ? item.maxParticipants : ''}</td>
+                        <td>
+                            <button class="btn btn-outline" onclick="viewActivityDetail(${item.activityId})">详情</button>
+                            <button class="btn btn-danger" onclick="deleteActivity(${item.activityId})">删除</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            activitiesTbody.innerHTML = rows;
+        } catch (e) {
+            console.error(e);
+            activitiesSummary.textContent = '加载失败，请检查网络或后端服务。';
+            showListMessage('调用 /activities 接口失败，请确认后端已启动、数据库连接正常。', 'error');
+        }
+    }
+
+    async function deleteActivity(id) {
+        if (!confirm('确认删除活动 ID=' + id + ' 吗？此操作不可恢复。')) return;
+
+        try {
+            const res = await fetch('/activities/' + id, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                showListMessage('删除成功。', 'success');
+                await loadActivities();
+            } else {
+                showListMessage('删除失败，状态码：' + res.status, 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showListMessage('删除请求失败，请检查网络或后端日志。', 'error');
+        }
+    }
+
+    async function createActivity(event) {
+        event.preventDefault();
+        showCreateMessage('', '');
+
+        const title = document.getElementById('title').value.trim();
+        const type = document.getElementById('type').value;
+        const location = document.getElementById('location').value.trim();
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+        const signupEndTime = document.getElementById('signupEndTime').value;
+        const maxParticipants = document.getElementById('maxParticipants').value;
+        const status = document.getElementById('status').value;
+        const description = document.getElementById('description').value.trim();
+        const createdBy = document.getElementById('createdById').value;
+
+        if (!title || !type || !location || !startTime || !endTime || !signupEndTime || !maxParticipants || !status || !createdBy) {
+            showCreateMessage('请完整填写带星号的必填项。', 'error');
+            return;
+        }
+
+        // datetime-local 返回类似 "2025-01-10T19:00"
+        // 后端如果期望 "2025-01-10T19:00:00" 可以简单补 ":00"
+        function fixDateTime(dt) {
+            if (!dt) return null;
+            return dt.length === 16 ? dt + ':00' : dt;
+        }
+
+        const payload = {
+            title: title,
+            type: type,
+            description: description || null,
+            startTime: fixDateTime(startTime),
+            endTime: fixDateTime(endTime),
+            location: location,
+            signupEndTime: fixDateTime(signupEndTime),
+            maxParticipants: Number(maxParticipants),
+            status: status,
+            createdBy: Number(createdBy)   // 从隐藏域传当前登录管理员的 ID
+            // createdTime 仍然由数据库默认值填充
+        };
+
+        createBtn.disabled = true;
+        showCreateMessage('正在提交新活动...', '');
+
+        try {
+            const res = await fetch('/activities', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                const newActivity = await res.json();
+                showCreateMessage('创建成功！新活动 ID = ' + newActivity.activityId, 'success');
+                // 清理部分表单，名称等留下也行
+                // createForm.reset(); // 如果希望全清空可以打开这一行
+                await loadActivities();
+            } else {
+                const text = await res.text();
+                showCreateMessage('创建失败，状态码：' + res.status + '，详情：' + text, 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showCreateMessage('创建请求失败，请检查后端服务与网络连接。', 'error');
+        } finally {
+            createBtn.disabled = false;
+        }
+    }
+
+    refreshBtn.addEventListener('click', loadActivities);
+    createForm.addEventListener('submit', createActivity);
+    detailModalMask.addEventListener('click', (e) => {
+        if (e.target === detailModalMask) closeDetailModal();
+    });
+
+    // 先初始化当前登录管理员，再加载活动列表
+    initCurrentUser();
+    loadActivities();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>活动报名</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 720px;
+            margin: 24px auto;
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px 22px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+            border: 1px solid #eee;
+        }
+        h1 {
+            margin: 0 0 6px 0;
+            font-size: 20px;
+        }
+        .sub {
+            color: #666;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+        .info-block {
+            background: #f8fbff;
+            border: 1px solid #e5efff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #333;
+        }
+        .info-block div { margin: 4px 0; }
+        form .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 13px; margin-bottom: 4px; }
+        input, textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px 10px;
+            font-size: 13px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            outline: none;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        input:focus, textarea:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px rgba(22,119,255,0.15);
+        }
+        .btn {
+            width: 100%;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 999px;
+            background: #1677ff;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .message { min-height: 18px; font-size: 12px; margin-top: 8px; }
+        .message.error { color: #d93025; }
+        .message.success { color: #0b9a42; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 id="page-title">活动报名</h1>
+    <div class="sub">请填写以下信息完成报名</div>
+
+    <div id="activity-info" class="info-block">正在加载活动信息...</div>
+
+    <form id="register-form">
+        <div class="form-group">
+            <label for="name">姓名 *</label>
+            <input id="name" name="name" required placeholder="请输入姓名">
+        </div>
+        <div class="form-group">
+            <label for="phone">手机号 *</label>
+            <input id="phone" name="phone" required placeholder="用于联系与查重">
+        </div>
+        <div class="form-group">
+            <label for="school">学校</label>
+            <input id="school" name="school" placeholder="可选">
+        </div>
+        <div class="form-group">
+            <label for="college">学院</label>
+            <input id="college" name="college" placeholder="可选">
+        </div>
+        <div class="form-group">
+            <label for="clazz">班级</label>
+            <input id="clazz" name="clazz" placeholder="可选">
+        </div>
+        <div class="form-group">
+            <label for="studentNo">学号</label>
+            <input id="studentNo" name="studentNo" placeholder="用于防止重复报名">
+        </div>
+        <div class="form-group">
+            <label for="email">邮箱</label>
+            <input id="email" name="email" placeholder="可选，用于通知">
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn">提交报名</button>
+        <div id="form-message" class="message"></div>
+    </form>
+</div>
+
+<script>
+    const activityInfo = document.getElementById('activity-info');
+    const form = document.getElementById('register-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const formMessage = document.getElementById('form-message');
+    const pageTitle = document.getElementById('page-title');
+
+    const params = new URLSearchParams(window.location.search);
+    const activityId = params.get('activityId');
+
+    if (!activityId) {
+        activityInfo.textContent = '缺少活动ID，无法报名。请通过正确的报名链接进入。';
+        form.style.display = 'none';
+    }
+
+    function formatDateTime(dt) {
+        if (!dt) return '';
+        return dt.toString().replace('T', ' ').substring(0, 16);
+    }
+
+    async function loadActivity() {
+        if (!activityId) return;
+        try {
+            const res = await fetch('/activities/' + activityId);
+            if (!res.ok) {
+                activityInfo.textContent = '未找到活动，状态码：' + res.status;
+                form.style.display = 'none';
+                return;
+            }
+            const data = await res.json();
+            pageTitle.textContent = data.title || '活动报名';
+            const startEnd = formatDateTime(data.startTime) + ' ~ ' + formatDateTime(data.endTime);
+            activityInfo.innerHTML = `
+                <div><strong>活动名称：</strong>${data.title || ''}</div>
+                <div><strong>时间：</strong>${startEnd}</div>
+                <div><strong>地点：</strong>${data.location || ''}</div>
+                <div><strong>状态：</strong>${data.status || ''}</div>
+                <div><strong>报名截止：</strong>${formatDateTime(data.signupEndTime)}</div>
+            `;
+        } catch (e) {
+            console.error(e);
+            activityInfo.textContent = '加载活动信息失败，请稍后再试。';
+            form.style.display = 'none';
+        }
+    }
+
+    function showFormMessage(text, type) {
+        formMessage.textContent = text || '';
+        formMessage.className = 'message';
+        if (type === 'error') formMessage.classList.add('error');
+        if (type === 'success') formMessage.classList.add('success');
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!activityId) return;
+        showFormMessage('');
+
+        const payload = {
+            name: document.getElementById('name').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            school: document.getElementById('school').value.trim(),
+            college: document.getElementById('college').value.trim(),
+            clazz: document.getElementById('clazz').value.trim(),
+            studentNo: document.getElementById('studentNo').value.trim(),
+            email: document.getElementById('email').value.trim()
+        };
+
+        if (!payload.name || !payload.phone) {
+            showFormMessage('姓名和手机号为必填项。', 'error');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = '提交中...';
+
+        try {
+            const res = await fetch('/activities/' + activityId + '/registrations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                showFormMessage('报名成功！', 'success');
+                form.reset();
+            } else {
+                const text = await res.text();
+                showFormMessage('报名失败：' + text, 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showFormMessage('网络或服务器异常，请稍后再试。', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = '提交报名';
+        }
+    });
+
+    loadActivity();
+</script>
+</body>
+</html>
