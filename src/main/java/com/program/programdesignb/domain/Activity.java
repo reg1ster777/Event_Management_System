@@ -1,4 +1,4 @@
-﻿package com.program.programdesignb.domain;
+package com.program.programdesignb.domain;
 
 import java.time.LocalDateTime;
 

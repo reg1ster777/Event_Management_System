@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>报名成功</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 720px;
+            margin: 24px auto;
+            background: #fff;
+            border-radius: 10px;
+            padding: 22px 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            border: 1px solid #eee;
+        }
+        h1 {
+            margin: 0 0 6px;
+            font-size: 22px;
+        }
+        .sub {
+            color: #666;
+            margin-bottom: 18px;
+            font-size: 13px;
+        }
+        .block {
+            background: #f8fbff;
+            border: 1px solid #e5efff;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #333;
+        }
+        .block div { margin: 4px 0; }
+        .success {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            font-size: 15px;
+            color: #0b9a42;
+        }
+        .actions {
+            margin-top: 18px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn-primary {
+            background: #1677ff;
+            color: #fff;
+        }
+        .btn-outline {
+            border: 1px solid #1677ff;
+            color: #1677ff;
+            background: #fff;
+        }
+        .message {
+            min-height: 18px;
+            font-size: 12px;
+            color: #d93025;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>报名成功</h1>
+    <div class="sub">以下是您的报名凭证，如需修改请联系活动管理员。</div>
+
+    <div id="status-message" class="message"></div>
+
+    <div class="success">✅ 已成功提交报名，工作人员将尽快审核。</div>
+
+    <div class="block" id="activity-block">正在加载活动信息...</div>
+    <div class="block" id="registration-block">正在加载报名信息...</div>
+
+    <div class="actions">
+        <button class="btn btn-primary" id="back-home">返回首页</button>
+        <button class="btn btn-outline" id="view-activity">查看活动介绍</button>
+    </div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const activityId = params.get('activityId');
+    const activityBlock = document.getElementById('activity-block');
+    const registrationBlock = document.getElementById('registration-block');
+    const statusMessage = document.getElementById('status-message');
+    const backHomeBtn = document.getElementById('back-home');
+    const viewActivityBtn = document.getElementById('view-activity');
+
+    backHomeBtn.addEventListener('click', () => window.location.href = '/index.html');
+    viewActivityBtn.addEventListener('click', () => window.location.href = '/admin-activities.html');
+
+    function formatDateTime(dt) {
+        if (!dt) return '';
+        return dt.toString().replace('T', ' ').substring(0, 16);
+    }
+
+    function loadRegistration() {
+        const stored = sessionStorage.getItem('lastRegistration');
+        if (!stored) {
+            registrationBlock.innerHTML = '未找到报名信息，请返回报名页重试。';
+            return;
+        }
+        try {
+            const payload = JSON.parse(stored);
+            if (!payload || payload.activityId !== activityId) {
+                registrationBlock.innerHTML = '报名信息已过期。';
+                return;
+            }
+            const reg = payload.registration || {};
+            const registeredTime = reg.createdTime ? formatDateTime(reg.createdTime) : '';
+            registrationBlock.innerHTML = `
+                <div><strong>报名编号：</strong>${reg.registrationId ?? '—'}</div>
+                <div><strong>姓名：</strong>${reg.name || ''}</div>
+                <div><strong>手机号：</strong>${reg.phone || ''}</div>
+                <div><strong>学号：</strong>${reg.studentNo || ''}</div>
+                <div><strong>学院/班级：</strong>${[reg.college || '', reg.clazz || ''].filter(Boolean).join(' / ') || '—'}</div>
+                <div><strong>邮箱：</strong>${reg.email || '—'}</div>
+                <div><strong>提交时间：</strong>${registeredTime || '—'}</div>
+            `;
+            sessionStorage.removeItem('lastRegistration');
+        } catch (err) {
+            console.error(err);
+            registrationBlock.innerHTML = '报名信息解析失败。';
+        }
+    }
+
+    async function loadActivity() {
+        if (!activityId) {
+            activityBlock.innerHTML = '缺少活动 ID。';
+            return;
+        }
+        try {
+            const res = await fetch('/activities/' + activityId);
+            if (!res.ok) {
+                activityBlock.innerHTML = '无法获取活动信息，状态码：' + res.status;
+                return;
+            }
+            const data = await res.json();
+            const startEnd = formatDateTime(data.startTime) + ' ~ ' + formatDateTime(data.endTime);
+            activityBlock.innerHTML = `
+                <div><strong>活动名称：</strong>${data.title || ''}</div>
+                <div><strong>时间：</strong>${startEnd}</div>
+                <div><strong>地点：</strong>${data.location || ''}</div>
+                <div><strong>状态：</strong>${data.status || ''}</div>
+            `;
+        } catch (e) {
+            console.error(e);
+            activityBlock.innerHTML = '加载活动信息失败，请稍后再试。';
+        }
+    }
+
+    loadRegistration();
+    loadActivity();
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-﻿package com.program.programdesignb.controller;
+package com.program.programdesignb.controller;
 
 import com.program.programdesignb.domain.Checkin;
 import com.program.programdesignb.service.CheckinService;

@@ -1,4 +1,4 @@
-﻿package com.program.programdesignb.service.impl;
+package com.program.programdesignb.service.impl;
 
 import com.program.programdesignb.domain.AdminUser;
 import com.program.programdesignb.mapper.AdminUserMapper;

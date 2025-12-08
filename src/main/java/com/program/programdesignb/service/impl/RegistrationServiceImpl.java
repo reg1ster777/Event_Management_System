@@ -37,6 +37,9 @@ public class RegistrationServiceImpl implements RegistrationService {
         if (activity.getSignupEndTime() != null && now.isAfter(activity.getSignupEndTime())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "已过报名截止时间");
         }
+        if (activity.getEndTime() != null && now.isAfter(activity.getEndTime())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "该活动已结束，无法报名");
+        }
 
         // 人数上限校验
         if (activity.getMaxParticipants() != null) {

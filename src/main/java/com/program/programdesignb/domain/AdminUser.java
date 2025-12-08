@@ -1,4 +1,4 @@
-﻿package com.program.programdesignb.domain;
+package com.program.programdesignb.domain;
 
 public class AdminUser {
     private Integer userId;

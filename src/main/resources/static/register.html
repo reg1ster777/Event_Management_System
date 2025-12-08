@@ -75,6 +75,7 @@
     <div class="sub">请填写以下信息完成报名</div>
 
     <div id="activity-info" class="info-block">正在加载活动信息...</div>
+    <div id="register-state" class="message" style="margin-bottom: 12px;"></div>
 
     <form id="register-form">
         <div class="form-group">
@@ -117,6 +118,7 @@
     const submitBtn = document.getElementById('submit-btn');
     const formMessage = document.getElementById('form-message');
     const pageTitle = document.getElementById('page-title');
+    const registerState = document.getElementById('register-state');
 
     const params = new URLSearchParams(window.location.search);
     const activityId = params.get('activityId');
@@ -129,6 +131,22 @@
     function formatDateTime(dt) {
         if (!dt) return '';
         return dt.toString().replace('T', ' ').substring(0, 16);
+    }
+
+    function disableRegistration(reason) {
+        if (registerState) {
+            registerState.textContent = reason;
+            registerState.className = 'message error';
+        }
+        form.style.display = 'none';
+    }
+
+    function enableRegistration() {
+        if (registerState) {
+            registerState.textContent = '';
+            registerState.className = 'message';
+        }
+        form.style.display = 'block';
     }
 
     async function loadActivity() {
@@ -150,6 +168,20 @@
                 <div><strong>状态：</strong>${data.status || ''}</div>
                 <div><strong>报名截止：</strong>${formatDateTime(data.signupEndTime)}</div>
             `;
+            const now = new Date();
+            const signupDeadlinePassed = data.signupEndTime ? now > new Date(data.signupEndTime) : false;
+            const ended = data.endTime ? now > new Date(data.endTime) : false;
+            const statusBlocked = data.status && data.status !== '报名中';
+
+            if (ended) {
+                disableRegistration('该活动已结束，无法继续报名。');
+            } else if (signupDeadlinePassed) {
+                disableRegistration('报名已截止，无法继续报名。');
+            } else if (statusBlocked) {
+                disableRegistration('当前活动未开放报名。');
+            } else {
+                enableRegistration();
+            }
         } catch (e) {
             console.error(e);
             activityInfo.textContent = '加载活动信息失败，请稍后再试。';

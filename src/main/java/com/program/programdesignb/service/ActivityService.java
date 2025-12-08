@@ -1,4 +1,4 @@
-﻿package com.program.programdesignb.service;
+package com.program.programdesignb.service;
 
 import com.program.programdesignb.domain.Activity;
 import java.util.List;

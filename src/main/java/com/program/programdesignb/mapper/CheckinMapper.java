@@ -1,4 +1,4 @@
-﻿package com.program.programdesignb.mapper;
+package com.program.programdesignb.mapper;
 
 import com.program.programdesignb.domain.Checkin;
 import java.util.List;

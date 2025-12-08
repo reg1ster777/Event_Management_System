@@ -572,6 +572,23 @@
         const startEnd = formatDateTime(data.startTime) + ' ~ ' + formatDateTime(data.endTime);
         const signupEnd = formatDateTime(data.signupEndTime);
         const createdTime = formatDateTime(data.createdTime);
+        let registerLink = '';
+        const now = new Date();
+        if (data.signupEndTime) {
+            const signupEndDate = new Date(data.signupEndTime);
+            if (now < signupEndDate) {
+                registerLink = `<a href="/register.html?activityId=${data.activityId ?? ''}" target="_blank">打开报名页</a>`;
+            } else {
+                registerLink = '<span style="color:#999;">报名已截止，报名链接已关闭</span>';
+            }
+        } else if (data.startTime) {
+            const start = new Date(data.startTime);
+            registerLink = now < start
+                ? `<a href="/register.html?activityId=${data.activityId ?? ''}" target="_blank">打开报名页</a>`
+                : '<span style="color:#999;">活动已开始，报名链接已关闭</span>';
+        } else {
+            registerLink = '<span style="color:#999;">未设置报名截止时间</span>';
+        }
 
         detailList.innerHTML = `
             <li><span class="detail-key">ID</span><span class="detail-value">${data.activityId ?? ''}</span></li>
@@ -585,7 +602,7 @@
             <li><span class="detail-key">创建人ID</span><span class="detail-value">${data.createdBy ?? ''}</span></li>
             <li><span class="detail-key">创建时间</span><span class="detail-value">${createdTime}</span></li>
             <li><span class="detail-key">简介</span><span class="detail-value">${data.description || ''}</span></li>
-            <li><span class="detail-key">报名链接</span><span class="detail-value"><a href="/register.html?activityId=${data.activityId ?? ''}" target="_blank">打开报名页</a></span></li>
+            <li><span class="detail-key">报名链接</span><span class="detail-value">${registerLink}</span></li>
         `;
     }
 
@@ -698,6 +715,28 @@
 
         if (!title || !type || !location || !startTime || !endTime || !signupEndTime || !maxParticipants || !status || !createdBy) {
             showCreateMessage('请完整填写带星号的必填项。', 'error');
+            return;
+        }
+
+        const startDate = new Date(startTime);
+        const endDate = new Date(endTime);
+        const signupDate = new Date(signupEndTime);
+        const now = new Date();
+
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || isNaN(signupDate.getTime())) {
+            showCreateMessage('时间格式有误，请重新选择。', 'error');
+            return;
+        }
+        if (startDate <= now) {
+            showCreateMessage('开始时间必须晚于当前时间。', 'error');
+            return;
+        }
+        if (endDate <= startDate) {
+            showCreateMessage('结束时间必须晚于开始时间。', 'error');
+            return;
+        }
+        if (signupDate >= startDate) {
+            showCreateMessage('报名截止时间必须早于开始时间。', 'error');
             return;
         }
 
