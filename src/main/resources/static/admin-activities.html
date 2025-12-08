@@ -17,6 +17,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
@@ -35,18 +37,36 @@
             opacity: 0.9;
         }
 
-        header .nav-links a {
-            color: #fff;
-            font-size: 13px;
-            margin-left: 14px;
-            text-decoration: none;
-            padding: 4px 8px;
-            border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
+        header .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        header .nav-links a:hover {
+        header .nav-links a,
+        header .nav-links button {
+            color: #fff;
+            font-size: 13px;
+            text-decoration: none;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            background: transparent;
+            cursor: pointer;
+        }
+
+        header .nav-links a:hover,
+        header .nav-links button:hover {
             background: rgba(0, 0, 0, 0.08);
+        }
+
+        header .nav-links button {
+            line-height: 1.2;
+        }
+
+        header .admin-info {
+            font-size: 13px;
+            opacity: 0.9;
         }
 
         main {
@@ -138,6 +158,11 @@
 
         .btn-danger:hover {
             background: #d9363e;
+        }
+
+        .btn[disabled] {
+            opacity: 0.45;
+            cursor: not-allowed;
         }
 
         table {
@@ -331,8 +356,9 @@
         <div class="subtitle">查看活动列表 · 创建新活动 · 管理活动状态</div>
     </div>
     <div class="nav-links">
+        <span class="admin-info" id="header-admin-name">当前管理员：--</span>
+        <button type="button" id="header-logout-btn">退出登录</button>
         <a href="/index.html">返回首页</a>
-        <a href="/login.html">重新登录</a>
     </div>
 </header>
 
@@ -451,6 +477,22 @@
                     <textarea id="description" name="description" placeholder="简要介绍活动内容、主讲人、面向对象等"></textarea>
                 </div>
 
+                <div class="form-group">
+                    <label for="liveUrl">直播链接（可选）</label>
+                    <input id="liveUrl" name="liveUrl" type="url" placeholder="如有直播，可填写链接">
+                </div>
+
+                <div class="form-group">
+                    <label for="attachmentUrl">附件链接（可选）</label>
+                    <input id="attachmentUrl" name="attachmentUrl" type="url" placeholder="如有附件，可填写下载链接">
+                </div>
+
+                <div class="form-group">
+                    <label for="tags">标签（可选，空格分隔）</label>
+                    <input id="tags" name="tags" type="text" placeholder="示例：就业 宣讲 校园活动">
+                    <div class="hint">多个标签请用空格分隔</div>
+                </div>
+
                 <button type="submit" id="create-btn" class="btn btn-primary" style="width: 100%; margin-top: 4px;">
                     提交新活动
                 </button>
@@ -491,6 +533,8 @@
     const detailModalMask = document.getElementById('detail-modal-mask');
     const detailList = document.getElementById('detail-list');
     const detailMessage = document.getElementById('detail-message');
+    const headerAdminName = document.getElementById('header-admin-name');
+    const headerLogoutBtn = document.getElementById('header-logout-btn');
 
     // 登录态：当前管理员信息
     let currentUser = null;
@@ -520,9 +564,15 @@
             creatorUsernameInput.value = currentUser.username || '';
             createdByIdInput.value = currentUser.userId != null ? currentUser.userId : '';
         }
-
-        // 也可以顺便在页面别的地方显示当前管理员
-        // 例如 header 右上角显示 “当前管理员：xxx”
+        if (headerAdminName) {
+            headerAdminName.textContent = '当前管理员：' + (currentUser.username || '');
+        }
+        if (headerLogoutBtn) {
+            headerLogoutBtn.onclick = () => {
+                localStorage.removeItem('adminUser');
+                window.location.href = '/login.html';
+            };
+        }
     }
 
     function showListMessage(text, type) {
@@ -599,6 +649,9 @@
             <li><span class="detail-key">状态</span><span class="detail-value">${data.status || ''}</span></li>
             <li><span class="detail-key">报名截止</span><span class="detail-value">${signupEnd}</span></li>
             <li><span class="detail-key">报名上限</span><span class="detail-value">${data.maxParticipants ?? ''}</span></li>
+            <li><span class="detail-key">直播链接</span><span class="detail-value">${data.liveUrl ? `<a href="${data.liveUrl}" target="_blank">${data.liveUrl}</a>` : ''}</span></li>
+            <li><span class="detail-key">附件链接</span><span class="detail-value">${data.attachmentUrl ? `<a href="${data.attachmentUrl}" target="_blank">${data.attachmentUrl}</a>` : ''}</span></li>
+            <li><span class="detail-key">标签</span><span class="detail-value">${data.tags || ''}</span></li>
             <li><span class="detail-key">创建人ID</span><span class="detail-value">${data.createdBy ?? ''}</span></li>
             <li><span class="detail-key">创建时间</span><span class="detail-value">${createdTime}</span></li>
             <li><span class="detail-key">简介</span><span class="detail-value">${data.description || ''}</span></li>
@@ -649,9 +702,15 @@
 
             activitiesSummary.textContent = '共 ' + list.length + ' 条活动。';
 
+            const myUserId = currentUser && currentUser.userId != null ? Number(currentUser.userId) : null;
+
             const rows = list.map(item => {
                 const startEnd = formatDateTime(item.startTime) + ' ~ ' + formatDateTime(item.endTime);
                 const statusHtml = renderStatusTag(item.status);
+                const creatorId = item.createdBy != null ? Number(item.createdBy) : null;
+                const isOwner = myUserId != null && creatorId != null && myUserId === creatorId;
+                const deleteAttrs = isOwner ? '' : 'disabled title="仅可删除自己创建的活动"';
+                const deleteBtn = `<button class="btn btn-danger" ${deleteAttrs} onclick="deleteActivity(${item.activityId}, ${item.createdBy ?? 'null'})">删除</button>`;
 
                 return `
                     <tr>
@@ -664,7 +723,7 @@
                         <td>${item.maxParticipants != null ? item.maxParticipants : ''}</td>
                         <td>
                             <button class="btn btn-outline" onclick="viewActivityDetail(${item.activityId})">详情</button>
-                            <button class="btn btn-danger" onclick="deleteActivity(${item.activityId})">删除</button>
+                            ${deleteBtn}
                         </td>
                     </tr>
                 `;
@@ -678,11 +737,17 @@
         }
     }
 
-    async function deleteActivity(id) {
+    async function deleteActivity(id, creatorId) {
+        const myUserId = currentUser && currentUser.userId != null ? Number(currentUser.userId) : null;
+        const ownerId = creatorId != null ? Number(creatorId) : null;
+        if (myUserId == null || ownerId == null || myUserId !== ownerId) {
+            alert('仅允许删除自己创建的活动。');
+            return;
+        }
         if (!confirm('确认删除活动 ID=' + id + ' 吗？此操作不可恢复。')) return;
 
         try {
-            const res = await fetch('/activities/' + id, {
+            const res = await fetch(`/activities/${id}?requesterId=${encodeURIComponent(myUserId)}`, {
                 method: 'DELETE'
             });
 
@@ -711,6 +776,9 @@
         const maxParticipants = document.getElementById('maxParticipants').value;
         const status = document.getElementById('status').value;
         const description = document.getElementById('description').value.trim();
+        const liveUrl = document.getElementById('liveUrl').value.trim();
+        const attachmentUrl = document.getElementById('attachmentUrl').value.trim();
+        const tags = document.getElementById('tags').value.trim();
         const createdBy = document.getElementById('createdById').value;
 
         if (!title || !type || !location || !startTime || !endTime || !signupEndTime || !maxParticipants || !status || !createdBy) {
@@ -757,6 +825,9 @@
             signupEndTime: fixDateTime(signupEndTime),
             maxParticipants: Number(maxParticipants),
             status: status,
+            liveUrl: liveUrl || null,
+            attachmentUrl: attachmentUrl || null,
+            tags: tags || null,
             createdBy: Number(createdBy)   // 从隐藏域传当前登录管理员的 ID
             // createdTime 仍然由数据库默认值填充
         };

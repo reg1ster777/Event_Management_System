@@ -12,5 +12,5 @@ public interface ActivityService {
 
     Activity updateActivity(Activity activity);
 
-    void deleteActivity(Integer id);
+    void deleteActivity(Integer id, Integer requesterId);
 }

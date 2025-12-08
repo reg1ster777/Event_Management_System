@@ -42,7 +42,15 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public void deleteActivity(Integer id) {
+    public void deleteActivity(Integer id, Integer requesterId) {
+        Activity existing = activityMapper.findById(id);
+        if (existing == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "活动不存在");
+        }
+        if (requesterId == null || existing.getCreatedBy() == null
+                || !existing.getCreatedBy().equals(requesterId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "仅允许删除自己创建的活动");
+        }
         activityMapper.deleteById(id);
     }
 

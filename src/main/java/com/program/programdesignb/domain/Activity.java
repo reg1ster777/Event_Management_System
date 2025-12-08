@@ -13,6 +13,9 @@ public class Activity {
     private LocalDateTime signupEndTime;
     private Integer maxParticipants;
     private String status;
+    private String liveUrl;
+    private String attachmentUrl;
+    private String tags;
     private Integer createdBy;
     private LocalDateTime createdTime;
 
@@ -21,6 +24,7 @@ public class Activity {
     public Activity(Integer activityId, String title, String type, String description,
                     LocalDateTime startTime, LocalDateTime endTime, String location,
                     LocalDateTime signupEndTime, Integer maxParticipants, String status,
+                    String liveUrl, String attachmentUrl, String tags,
                     Integer createdBy, LocalDateTime createdTime) {
         this.activityId = activityId;
         this.title = title;
@@ -32,6 +36,9 @@ public class Activity {
         this.signupEndTime = signupEndTime;
         this.maxParticipants = maxParticipants;
         this.status = status;
+        this.liveUrl = liveUrl;
+        this.attachmentUrl = attachmentUrl;
+        this.tags = tags;
         this.createdBy = createdBy;
         this.createdTime = createdTime;
     }
@@ -66,6 +73,15 @@ public class Activity {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
+    public String getLiveUrl() { return liveUrl; }
+    public void setLiveUrl(String liveUrl) { this.liveUrl = liveUrl; }
+
+    public String getAttachmentUrl() { return attachmentUrl; }
+    public void setAttachmentUrl(String attachmentUrl) { this.attachmentUrl = attachmentUrl; }
+
+    public String getTags() { return tags; }
+    public void setTags(String tags) { this.tags = tags; }
+
     public Integer getCreatedBy() { return createdBy; }
     public void setCreatedBy(Integer createdBy) { this.createdBy = createdBy; }
 
@@ -79,6 +95,9 @@ public class Activity {
                 ", title='" + title + '\'' +
                 ", type='" + type + '\'' +
                 ", status='" + status + '\'' +
+                ", liveUrl='" + liveUrl + '\'' +
+                ", attachmentUrl='" + attachmentUrl + '\'' +
+                ", tags='" + tags + '\'' +
                 '}';
     }
 }

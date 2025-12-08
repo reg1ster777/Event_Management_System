@@ -22,6 +22,9 @@ public interface ActivityMapper {
                    signup_end_time as signupEndTime,
                    max_participants as maxParticipants,
                    status,
+                   live_url as liveUrl,
+                   attachment_url as attachmentUrl,
+                   tags,
                    created_by as createdBy,
                    created_time as createdTime
             from activity
@@ -40,6 +43,9 @@ public interface ActivityMapper {
                    signup_end_time as signupEndTime,
                    max_participants as maxParticipants,
                    status,
+                   live_url as liveUrl,
+                   attachment_url as attachmentUrl,
+                   tags,
                    created_by as createdBy,
                    created_time as createdTime
             from activity
@@ -48,9 +54,9 @@ public interface ActivityMapper {
 
     @Insert("""
             insert into activity(title, type, description, start_time, end_time, location,
-                                  signup_end_time, max_participants, status, created_by)
+                                  signup_end_time, max_participants, status, live_url, attachment_url, tags, created_by)
             values (#{title}, #{type}, #{description}, #{startTime}, #{endTime}, #{location},
-                    #{signupEndTime}, #{maxParticipants}, #{status}, #{createdBy})
+                    #{signupEndTime}, #{maxParticipants}, #{status}, #{liveUrl}, #{attachmentUrl}, #{tags}, #{createdBy})
             """)
     @Options(useGeneratedKeys = true, keyProperty = "activityId")
     int insert(Activity activity);
@@ -65,7 +71,10 @@ public interface ActivityMapper {
                 location = #{location},
                 signup_end_time = #{signupEndTime},
                 max_participants = #{maxParticipants},
-                status = #{status}
+                status = #{status},
+                live_url = #{liveUrl},
+                attachment_url = #{attachmentUrl},
+                tags = #{tags}
             where activity_id = #{activityId}
             """)
     int update(Activity activity);

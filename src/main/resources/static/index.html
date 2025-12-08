@@ -21,6 +21,11 @@
             background: #1677ff;
             color: #fff;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
         header .title {
@@ -32,6 +37,44 @@
         header .subtitle {
             font-size: 13px;
             opacity: 0.9;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .header-right .admin-name {
+            white-space: nowrap;
+        }
+
+        .header-right button,
+        .header-right a {
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .header-right button:hover,
+        .header-right a:hover {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .header-right button:focus-visible {
+            outline: 2px solid #fff;
         }
 
         main {
@@ -184,8 +227,13 @@
 </head>
 <body>
 <header>
-    <div class="title">高校学生活动全流程管理系统</div>
-    <div class="subtitle">Spring Boot + MySQL · 支持活动发布、报名、签到与后台管理</div>
+    <div class="header-left">
+        <div class="title">高校学生活动全流程管理系统</div>
+        <div class="subtitle">Spring Boot + MySQL · 支持活动发布、报名、签到与后台管理</div>
+    </div>
+    <div class="header-right" id="admin-info">
+        <a href="/login.html">管理员登录</a>
+    </div>
 </header>
 
 <main>
@@ -211,17 +259,16 @@
 
         <!-- 右侧功能入口卡片 -->
         <section class="cards">
-            <!-- 管理员入口 -->
+            <!-- 活动浏览入口 -->
             <div class="card">
-                <div class="card-title">管理员入口</div>
+                <div class="card-title">活动浏览</div>
                 <div class="card-desc">
-                    面向学院老师或学生会负责人，用于创建与维护活动信息，查看报名情况与签到数据。
+                    查看所有活动详情、当前报名人数与状态，并可跳转至后台页面进行查看与管理。
                 </div>
                 <div class="btn-row">
-                    <!-- 假设你刚才的登录页面叫 login.html -->
-                    <a href="/login.html" class="btn btn-primary">管理员登录</a>
+                    <a href="/admin-activities.html" class="btn btn-primary">查看活动信息</a>
                 </div>
-                <div class="status">登录接口：<code>POST /admin/login</code></div>
+                <div class="status">活动列表接口：<code>GET /activities</code></div>
             </div>
 
             <!-- 活动与报名入口（预留给学生端，可以后续扩展） -->
@@ -256,6 +303,38 @@
 </footer>
 
 <script>
+    const adminInfoBox = document.getElementById('admin-info');
+
+    function renderAdminInfo() {
+        if (!adminInfoBox) return;
+        const stored = localStorage.getItem('adminUser');
+        if (!stored) {
+            adminInfoBox.innerHTML = '<a href="/login.html">管理员登录</a>';
+            return;
+        }
+        let user;
+        try {
+            user = JSON.parse(stored);
+        } catch (err) {
+            console.error('无法解析管理员信息', err);
+            localStorage.removeItem('adminUser');
+            adminInfoBox.innerHTML = '<a href="/login.html">管理员登录</a>';
+            return;
+        }
+        const username = user?.username || '管理员';
+        adminInfoBox.innerHTML = `
+            <div class="admin-name">当前管理员：<strong>${username}</strong></div>
+            <button type="button" id="logout-btn">退出登录</button>
+        `;
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('adminUser');
+                renderAdminInfo();
+            });
+        }
+    }
+
     // 简单检测 /activities 接口，看后端与数据库是否正常
     (async function checkBackendHealth() {
         const el = document.getElementById('health-status');
@@ -273,6 +352,8 @@
             el.innerHTML = '无法连接到后端，请确认应用是否已启动、数据库配置是否正确。';
         }
     })();
+
+    renderAdminInfo();
 </script>
 </body>
 </html>
