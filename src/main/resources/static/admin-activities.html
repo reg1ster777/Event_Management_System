@@ -119,6 +119,35 @@
             color: #777;
         }
 
+        .filter-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toggle-btn {
+            border: 1px solid #1677ff;
+            color: #1677ff;
+            background: #fff;
+            padding: 5px 12px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .toggle-btn.active {
+            background: #1677ff;
+            color: #fff;
+        }
+
+        .search-input {
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 12px;
+        }
+
         .btn {
             display: inline-block;
             padding: 6px 12px;
@@ -195,23 +224,27 @@
         }
 
         .tag-status.unpublished {
-            background: #f5f5f5;
-            color: #555;
+            background: #f2f2f2;
+            color: #7a7a7a;
+            border: 1px solid #d9d9d9;
         }
 
         .tag-status.signing {
-            background: #e6f4ff;
-            color: #1677ff;
+            background: #e7f9ef;
+            color: #1f9d55;
+            border: 1px solid #9fd8b5;
         }
 
         .tag-status.closed {
-            background: #fff2e8;
-            color: #fa8c16;
+            background: #fff4e6;
+            color: #d67a00;
+            border: 1px solid #f1c48a;
         }
 
         .tag-status.finished {
-            background: #f6ffed;
-            color: #52c41a;
+            background: #ffecec;
+            color: #d93025;
+            border: 1px solid #f2b8b5;
         }
 
         .message {
@@ -373,7 +406,10 @@
 
             <div class="toolbar">
                 <div class="info" id="activities-summary">正在加载活动列表...</div>
-                <div>
+                <div class="filter-actions">
+                    <button class="toggle-btn" id="toggle-my-activities">我的活动</button>
+                    <input id="search-title" class="search-input" type="text" placeholder="按名称搜索">
+                    <button class="btn btn-outline" id="search-btn">查询</button>
                     <button class="btn btn-outline" id="refresh-btn">刷新列表</button>
                 </div>
             </div>
@@ -535,9 +571,16 @@
     const detailMessage = document.getElementById('detail-message');
     const headerAdminName = document.getElementById('header-admin-name');
     const headerLogoutBtn = document.getElementById('header-logout-btn');
+    const toggleMyActivitiesBtn = document.getElementById('toggle-my-activities');
+    const searchInput = document.getElementById('search-title');
+    const searchBtn = document.getElementById('search-btn');
 
     // 登录态：当前管理员信息
     let currentUser = null;
+    // 活动缓存用于筛选
+    let allActivities = [];
+    let onlyMine = false;
+    let keyword = '';
 
     // 尝试从 localStorage 中读取登录时保存的管理员信息
     function initCurrentUser() {
@@ -678,6 +721,61 @@
         }
     }
 
+    function renderActivities(list) {
+        if (!Array.isArray(list) || list.length === 0) {
+            activitiesSummary.textContent = '当前暂无活动记录。';
+            activitiesTbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">暂无活动，请在右侧创建新活动。</td></tr>';
+            return;
+        }
+
+        activitiesSummary.textContent = '共 ' + list.length + ' 条活动。';
+        const myUserId = currentUser && currentUser.userId != null ? Number(currentUser.userId) : null;
+
+        const rows = list.map(item => {
+            const startEnd = formatDateTime(item.startTime) + ' ~ ' + formatDateTime(item.endTime);
+            const statusHtml = renderStatusTag(item.status);
+            const creatorId = item.createdBy != null ? Number(item.createdBy) : null;
+            const isOwner = myUserId != null && creatorId != null && myUserId === creatorId;
+            const deleteAttrs = isOwner ? '' : 'disabled title="仅可删除自己创建的活动"';
+            const deleteBtn = `<button class="btn btn-danger" ${deleteAttrs} onclick="deleteActivity(${item.activityId}, ${item.createdBy ?? 'null'})">删除</button>`;
+            const publishBtn = (isOwner && item.status === '未发布')
+                ? `<button class="btn btn-primary" onclick="publishActivity(${item.activityId})">发布</button>`
+                : '';
+
+            return `
+                <tr>
+                    <td>${item.activityId}</td>
+                    <td>${item.title || ''}</td>
+                    <td>${item.type || ''}</td>
+                    <td>${startEnd}</td>
+                    <td>${item.location || ''}</td>
+                    <td>${statusHtml}</td>
+                    <td>${item.maxParticipants != null ? item.maxParticipants : ''}</td>
+                    <td>
+                        <button class="btn btn-outline" onclick="viewActivityDetail(${item.activityId})">详情</button>
+                        ${publishBtn}
+                        ${deleteBtn}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        activitiesTbody.innerHTML = rows;
+    }
+
+    function applyFilters() {
+        let filtered = Array.from(allActivities);
+        const myUserId = currentUser && currentUser.userId != null ? Number(currentUser.userId) : null;
+        if (onlyMine && myUserId != null) {
+            filtered = filtered.filter(item => item.createdBy != null && Number(item.createdBy) === myUserId);
+        }
+        const kw = keyword.trim().toLowerCase();
+        if (kw) {
+            filtered = filtered.filter(item => (item.title || '').toLowerCase().includes(kw));
+        }
+        renderActivities(filtered);
+    }
+
     async function loadActivities() {
         activitiesSummary.textContent = '正在加载活动列表...';
         showListMessage('', '');
@@ -692,44 +790,13 @@
             }
 
             const data = await res.json();
-            const list = Array.isArray(data) ? data : [];
-
-            if (list.length === 0) {
+            allActivities = Array.isArray(data) ? data : [];
+            if (allActivities.length === 0) {
                 activitiesSummary.textContent = '当前暂无活动记录。';
                 activitiesTbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">暂无活动，请在右侧创建新活动。</td></tr>';
                 return;
             }
-
-            activitiesSummary.textContent = '共 ' + list.length + ' 条活动。';
-
-            const myUserId = currentUser && currentUser.userId != null ? Number(currentUser.userId) : null;
-
-            const rows = list.map(item => {
-                const startEnd = formatDateTime(item.startTime) + ' ~ ' + formatDateTime(item.endTime);
-                const statusHtml = renderStatusTag(item.status);
-                const creatorId = item.createdBy != null ? Number(item.createdBy) : null;
-                const isOwner = myUserId != null && creatorId != null && myUserId === creatorId;
-                const deleteAttrs = isOwner ? '' : 'disabled title="仅可删除自己创建的活动"';
-                const deleteBtn = `<button class="btn btn-danger" ${deleteAttrs} onclick="deleteActivity(${item.activityId}, ${item.createdBy ?? 'null'})">删除</button>`;
-
-                return `
-                    <tr>
-                        <td>${item.activityId}</td>
-                        <td>${item.title || ''}</td>
-                        <td>${item.type || ''}</td>
-                        <td>${startEnd}</td>
-                        <td>${item.location || ''}</td>
-                        <td>${statusHtml}</td>
-                        <td>${item.maxParticipants != null ? item.maxParticipants : ''}</td>
-                        <td>
-                            <button class="btn btn-outline" onclick="viewActivityDetail(${item.activityId})">详情</button>
-                            ${deleteBtn}
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            activitiesTbody.innerHTML = rows;
+            applyFilters();
         } catch (e) {
             console.error(e);
             activitiesSummary.textContent = '加载失败，请检查网络或后端服务。';
@@ -760,6 +827,41 @@
         } catch (e) {
             console.error(e);
             showListMessage('删除请求失败，请检查网络或后端日志。', 'error');
+        }
+    }
+
+    async function publishActivity(id) {
+        if (!allActivities || !Array.isArray(allActivities)) return;
+        const myUserId = currentUser && currentUser.userId != null ? Number(currentUser.userId) : null;
+        const target = allActivities.find(a => a.activityId === id);
+        if (!target) return;
+        if (myUserId == null || target.createdBy == null || Number(target.createdBy) !== myUserId) {
+            alert('仅允许发布自己创建的活动。');
+            return;
+        }
+        if (!confirm('确认将该活动发布为“报名中”状态？')) return;
+
+        const payload = {
+            ...target,
+            status: '报名中'
+        };
+
+        try {
+            const res = await fetch('/activities/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                showListMessage('发布成功。', 'success');
+                await loadActivities();
+            } else {
+                const text = await res.text();
+                showListMessage('发布失败，状态码：' + res.status + '，详情：' + text, 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showListMessage('发布请求失败，请检查网络或后端日志。', 'error');
         }
     }
 
@@ -864,6 +966,21 @@
     createForm.addEventListener('submit', createActivity);
     detailModalMask.addEventListener('click', (e) => {
         if (e.target === detailModalMask) closeDetailModal();
+    });
+    toggleMyActivitiesBtn?.addEventListener('click', () => {
+        onlyMine = !onlyMine;
+        toggleMyActivitiesBtn.classList.toggle('active', onlyMine);
+        applyFilters();
+    });
+    searchBtn?.addEventListener('click', () => {
+        keyword = searchInput.value || '';
+        applyFilters();
+    });
+    searchInput?.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+            keyword = searchInput.value || '';
+            applyFilters();
+        }
     });
 
     // 先初始化当前登录管理员，再加载活动列表

@@ -49,6 +49,7 @@ public interface ActivityMapper {
                    created_by as createdBy,
                    created_time as createdTime
             from activity
+            where status <> '已删除'
             """)
     List<Activity> findAll();
 
@@ -78,6 +79,13 @@ public interface ActivityMapper {
             where activity_id = #{activityId}
             """)
     int update(Activity activity);
+
+    @Update("""
+            update activity
+            set status = #{status}
+            where activity_id = #{id}
+            """)
+    int updateStatusById(Integer id, String status);
 
     @Delete("delete from activity where activity_id = #{id}")
     int deleteById(Integer id);
