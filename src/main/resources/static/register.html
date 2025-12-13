@@ -230,7 +230,11 @@
                 form.reset();
             } else {
                 const text = await res.text();
-                showFormMessage('报名失败：' + text, 'error');
+                if (text && text.includes('报名人数已满')) {
+                    showFormMessage('报名人数已满', 'error');
+                } else {
+                    showFormMessage('报名失败：' + text, 'error');
+                }
             }
         } catch (err) {
             console.error(err);

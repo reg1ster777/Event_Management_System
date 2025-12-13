@@ -1,4 +1,4 @@
-<!-- src/main/resources/static/index.html -->
+﻿<!-- src/main/resources/static/index.html -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -271,19 +271,16 @@
                 <div class="status">活动列表接口：<code>GET /activities</code></div>
             </div>
 
-            <!-- 活动与报名入口（预留给学生端，可以后续扩展） -->
+            <!-- 新建活动入口 -->
             <div class="card">
-                <div class="card-title">学生入口（示意）</div>
+                <div class="card-title">新建活动</div>
                 <div class="card-desc">
-                    学生可查看当前开放的活动信息，并在线提交报名。此处可继续扩展为单独的前端页面。
+                    管理员可跳转到专用页面创建新活动，填写信息后默认保存为“未发布”，再在列表中发布。
                 </div>
                 <div class="btn-row">
-                    <!-- 目前先简单跳到 /activities，看到 JSON 即可 -->
-                    <a href="/activities" class="btn btn-outline">查看活动列表（JSON）</a>
-                    <!-- 未来可以做一个真正的活动列表页面，如 activities.html -->
-                    <!-- <a href="/activities.html" class="btn btn-primary">图形化活动列表</a> -->
+                    <a href="/admin-create-activity.html" class="btn btn-outline">去创建活动</a>
                 </div>
-                <div class="status">活动列表接口：<code>GET /activities</code></div>
+                <div class="status">创建接口：<code>POST /activities</code></div>
             </div>
 
             <!-- 系统状态小卡片：简单检测后端是否正常 -->

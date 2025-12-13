@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>新建活动</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            background: #f5f5f5;
+        }
+        header {
+            padding: 16px 32px;
+            background: #1677ff;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        main {
+            padding: 24px 32px 32px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .card-desc {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-size: 13px; margin-bottom: 4px; }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px 8px;
+            font-size: 13px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .form-group textarea { resize: vertical; min-height: 60px; }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.15);
+        }
+        .hint { font-size: 11px; color: #999; margin-top: 2px; }
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: none;
+            background: #1677ff;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: box-shadow .15s ease, background .15s ease;
+        }
+        .btn:disabled { opacity: .6; cursor: not-allowed; }
+        .btn:hover { box-shadow: 0 4px 10px rgba(22,119,255,0.35); }
+        .message { margin-top: 8px; font-size: 12px; min-height: 18px; }
+        .message.error { color: #d93025; }
+        .message.success { color: #0b9a42; }
+        .readonly-field { color: #888; background: #f8f8f8; }
+    </style>
+</head>
+<body>
+<header>
+    <div>
+        <div style="font-size:18px;font-weight:600;">新建活动</div>
+        <div style="font-size:12px;opacity:.9;">填写信息并提交，默认状态为“未发布”</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;font-size:13px;">
+        <span id="header-admin-name">当前管理员：--</span>
+        <a href="/admin-activities.html" style="color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,0.7);padding:4px 10px;border-radius:999px;">返回活动列表</a>
+        <a href="/index.html" style="color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,0.7);padding:4px 10px;border-radius:999px;">返回首页</a>
+    </div>
+</header>
+
+<main>
+    <div class="card">
+        <div class="card-title">创建活动</div>
+        <div class="card-desc">默认状态为“未发布”，提交后可在活动列表中点击“发布”进入报名中。</div>
+
+        <form id="create-form">
+            <div class="form-group">
+                <label>创建人 *</label>
+                <input id="creatorUsername" type="text" readonly class="readonly-field">
+                <input id="createdById" type="hidden">
+                <div class="hint">从当前登录管理员自动获取，无法修改</div>
+            </div>
+
+            <div class="form-group">
+                <label for="title">活动名称 *</label>
+                <input id="title" name="title" type="text" required placeholder="请输入活动名称">
+            </div>
+
+            <div class="form-group">
+                <label for="type">活动类型 *</label>
+                <select id="type" name="type" required>
+                    <option value="">请选择</option>
+                    <option value="讲座">讲座</option>
+                    <option value="宣讲会">宣讲会</option>
+                    <option value="就业指导">就业指导</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="location">活动地点 *</label>
+                <input id="location" name="location" type="text" required placeholder="例如：南校区教学楼01">
+            </div>
+
+            <div class="form-group">
+                <label for="startTime">开始时间 *</label>
+                <input id="startTime" name="startTime" type="datetime-local" required>
+            </div>
+
+            <div class="form-group">
+                <label for="endTime">结束时间 *</label>
+                <input id="endTime" name="endTime" type="datetime-local" required>
+            </div>
+
+            <div class="form-group">
+                <label for="signupEndTime">报名截止时间 *</label>
+                <input id="signupEndTime" name="signupEndTime" type="datetime-local" required>
+                <div class="hint">建议设为活动开始前一天 23:59</div>
+            </div>
+
+            <div class="form-group">
+                <label for="maxParticipants">最大报名人数 *</label>
+                <input id="maxParticipants" name="maxParticipants" type="number" min="1" required value="100">
+            </div>
+
+            <div class="form-group">
+                <label for="description">活动简介（可选）</label>
+                <textarea id="description" name="description" placeholder="简要介绍活动内容、主讲人、面向对象等"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="liveUrl">直播链接（可选）</label>
+                <input id="liveUrl" name="liveUrl" type="url" placeholder="如有直播，可填写链接">
+            </div>
+
+            <div class="form-group">
+                <label for="attachmentUrl">附件链接（可选）</label>
+                <input id="attachmentUrl" name="attachmentUrl" type="url" placeholder="如有附件，可填写下载链接">
+            </div>
+
+            <div class="form-group">
+                <label for="tags">标签（可选，空格分隔）</label>
+                <input id="tags" name="tags" type="text" placeholder="示例：就业 宣讲 校园活动">
+                <div class="hint">多个标签请用空格分隔</div>
+            </div>
+
+            <button type="submit" id="create-btn" class="btn">提交新活动</button>
+            <div id="create-message" class="message"></div>
+        </form>
+    </div>
+</main>
+
+<script>
+    const headerAdminName = document.getElementById('header-admin-name');
+    const createForm = document.getElementById('create-form');
+    const createBtn = document.getElementById('create-btn');
+    const createMessage = document.getElementById('create-message');
+    let currentUser = null;
+
+    function initCurrentUser() {
+        const stored = localStorage.getItem('adminUser');
+        if (!stored) {
+            alert('未检测到登录信息，请先登录管理员账号。');
+            window.location.href = '/login.html';
+            return;
+        }
+        try {
+            currentUser = JSON.parse(stored);
+        } catch (e) {
+            console.error(e);
+            alert('登录信息解析失败，请重新登录。');
+            window.location.href = '/login.html';
+            return;
+        }
+        const creatorUsernameInput = document.getElementById('creatorUsername');
+        const createdByIdInput = document.getElementById('createdById');
+        if (creatorUsernameInput && createdByIdInput) {
+            creatorUsernameInput.value = currentUser.username || '';
+            createdByIdInput.value = currentUser.userId != null ? currentUser.userId : '';
+        }
+        if (headerAdminName) {
+            headerAdminName.textContent = '当前管理员：' + (currentUser.username || '');
+        }
+    }
+
+    function showCreateMessage(text, type) {
+        createMessage.textContent = text || '';
+        createMessage.className = 'message';
+        if (type === 'error') createMessage.classList.add('error');
+        if (type === 'success') createMessage.classList.add('success');
+    }
+
+    createForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        showCreateMessage('', '');
+
+        const title = document.getElementById('title').value.trim();
+        const type = document.getElementById('type').value;
+        const location = document.getElementById('location').value.trim();
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+        const signupEndTime = document.getElementById('signupEndTime').value;
+        const maxParticipants = document.getElementById('maxParticipants').value;
+        const description = document.getElementById('description').value.trim();
+        const liveUrl = document.getElementById('liveUrl').value.trim();
+        const attachmentUrl = document.getElementById('attachmentUrl').value.trim();
+        const tags = document.getElementById('tags').value.trim();
+        const createdBy = document.getElementById('createdById').value;
+
+        if (!title || !type || !location || !startTime || !endTime || !signupEndTime || !maxParticipants || !createdBy) {
+            showCreateMessage('请完整填写必填项。', 'error');
+            return;
+        }
+
+        const startDate = new Date(startTime);
+        const endDate = new Date(endTime);
+        const signupDate = new Date(signupEndTime);
+        const now = new Date();
+        if (isNaN(startDate) || isNaN(endDate) || isNaN(signupDate)) {
+            showCreateMessage('时间格式有误，请重新选择。', 'error');
+            return;
+        }
+        if (startDate <= now) {
+            showCreateMessage('开始时间必须晚于当前时间。', 'error');
+            return;
+        }
+        if (endDate <= startDate) {
+            showCreateMessage('结束时间必须晚于开始时间。', 'error');
+            return;
+        }
+        if (signupDate >= startDate) {
+            showCreateMessage('报名截止时间必须早于开始时间。', 'error');
+            return;
+        }
+
+        function fixDateTime(dt) {
+            if (!dt) return null;
+            return dt.length === 16 ? dt + ':00' : dt;
+        }
+
+        const payload = {
+            title,
+            type,
+            description: description || null,
+            startTime: fixDateTime(startTime),
+            endTime: fixDateTime(endTime),
+            location,
+            signupEndTime: fixDateTime(signupEndTime),
+            maxParticipants: Number(maxParticipants),
+            status: '未发布',
+            liveUrl: liveUrl || null,
+            attachmentUrl: attachmentUrl || null,
+            tags: tags || null,
+            createdBy: Number(createdBy)
+        };
+
+        createBtn.disabled = true;
+        showCreateMessage('正在提交新活动...', '');
+        try {
+            const res = await fetch('/activities', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                const newActivity = await res.json();
+                showCreateMessage('创建成功！新活动 ID = ' + newActivity.activityId, 'success');
+                setTimeout(() => window.location.href = '/admin-activities.html', 600);
+            } else {
+                const text = await res.text();
+                showCreateMessage('创建失败，状态码：' + res.status + '，详情：' + text, 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showCreateMessage('创建请求失败，请检查网络或后端日志。', 'error');
+        } finally {
+            createBtn.disabled = false;
+        }
+    });
+
+    initCurrentUser();
+</script>
+</body>
+</html>
