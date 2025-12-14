@@ -84,11 +84,13 @@
         </div>
         <div class="form-group">
             <label for="phone">手机号 *</label>
-            <input id="phone" name="phone" required placeholder="用于联系与查重">
+            <input id="phone" name="phone" required placeholder="用于联系与查重"
+                   inputmode="numeric" pattern="[0-9]+" title="仅允许输入数字">
         </div>
         <div class="form-group">
             <label for="studentNo">学号 *</label>
-            <input id="studentNo" name="studentNo" placeholder="用于防止重复报名">
+            <input id="studentNo" name="studentNo" required placeholder="用于防止重复报名"
+                   inputmode="numeric" pattern="[0-9]+" title="仅允许输入数字">
         </div>
         <div class="form-group">
             <label for="school">学校</label>
@@ -213,8 +215,17 @@
             email: document.getElementById('email').value.trim()
         };
 
-        if (!payload.name || !payload.phone) {
-            showFormMessage('姓名和手机号为必填项。', 'error');
+        if (!payload.name || !payload.phone || !payload.studentNo) {
+            showFormMessage('姓名、手机号、学号均为必填项。', 'error');
+            return;
+        }
+        const digitRegex = /^\d+$/;
+        if (!digitRegex.test(payload.phone)) {
+            showFormMessage('手机号只能输入数字。', 'error');
+            return;
+        }
+        if (!digitRegex.test(payload.studentNo)) {
+            showFormMessage('学号只能输入数字。', 'error');
             return;
         }
 
@@ -231,12 +242,21 @@
                 showFormMessage('报名成功！', 'success');
                 form.reset();
             } else {
-                const text = await res.text();
-                if (text && text.includes('报名人数已满')) {
-                    showFormMessage('报名人数已满', 'error');
-                } else {
-                    showFormMessage('报名失败：' + text, 'error');
+                const raw = await res.text();
+                let errMsg = '报名失败';
+                if (raw) {
+                    try {
+                        const parsed = JSON.parse(raw);
+                        if (parsed && parsed.message) {
+                            errMsg = parsed.message;
+                        } else {
+                            errMsg = raw;
+                        }
+                    } catch (parseErr) {
+                        errMsg = raw;
+                    }
                 }
+                showFormMessage(errMsg, 'error');
             }
         } catch (err) {
             console.error(err);

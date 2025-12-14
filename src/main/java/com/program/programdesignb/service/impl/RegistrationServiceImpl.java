@@ -24,6 +24,9 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     @Override
     public Registration register(Integer activityId, Registration registration) {
+        sanitizeRegistration(registration);
+        ensureRequiredFields(registration);
+
         Activity activity = activityMapper.findById(activityId);
         if (activity == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "活动不存在");
@@ -67,6 +70,46 @@ public class RegistrationServiceImpl implements RegistrationService {
         registration.setCreatedTime(now);
         registrationMapper.insert(registration);
         return registration;
+    }
+
+    private void sanitizeRegistration(Registration registration) {
+        if (registration == null) return;
+        registration.setName(trim(registration.getName()));
+        registration.setPhone(trim(registration.getPhone()));
+        registration.setStudentNo(trim(registration.getStudentNo()));
+        registration.setSchool(trim(registration.getSchool()));
+        registration.setCollege(trim(registration.getCollege()));
+        registration.setClazz(trim(registration.getClazz()));
+        registration.setEmail(trim(registration.getEmail()));
+    }
+
+    private void ensureRequiredFields(Registration registration) {
+        if (registration == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "报名信息不能为空");
+        }
+        if (!StringUtils.hasText(registration.getName())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "姓名为必填项");
+        }
+        if (!StringUtils.hasText(registration.getPhone())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "手机号为必填项");
+        }
+        if (!StringUtils.hasText(registration.getStudentNo())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "学号为必填项");
+        }
+        if (!isDigits(registration.getPhone())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "手机号只能包含数字");
+        }
+        if (!isDigits(registration.getStudentNo())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "学号只能包含数字");
+        }
+    }
+
+    private String trim(String value) {
+        return value == null ? null : value.trim();
+    }
+
+    private boolean isDigits(String value) {
+        return value != null && value.matches("\\d+");
     }
 
     @Override
