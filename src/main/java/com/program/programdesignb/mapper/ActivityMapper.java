@@ -53,7 +53,7 @@ public interface ActivityMapper {
                    created_by as createdBy,
                    created_time as createdTime
             from activity
-            where status <> '已删除'
+            where status <> 'DELETED' and status <> '已删除'
             """)
     List<Activity> findAll();
 

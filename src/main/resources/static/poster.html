@@ -95,6 +95,27 @@
     const posterStatus = document.getElementById('poster-status');
     const qrCodeImg = document.getElementById('qr-code');
 
+    const STATUS_TEXT_MAP = {
+        DRAFT: '未发布',
+        OPEN: '报名中',
+        CLOSED: '已截止',
+        FINISHED: '已结束',
+        DELETED: '已删除'
+    };
+    const LEGACY_STATUS_TO_CODE = {
+        '未发布': 'DRAFT',
+        '报名中': 'OPEN',
+        '已截止': 'CLOSED',
+        '已结束': 'FINISHED',
+        '已删除': 'DELETED'
+    };
+
+    function normalizeStatus(status) {
+        if (!status) return '';
+        if (STATUS_TEXT_MAP[status]) return status;
+        return LEGACY_STATUS_TO_CODE[status] || status;
+    }
+
     if (!activityId) {
         posterTitle.textContent = '缺少活动信息';
         posterTime.textContent = '请通过正确的海报链接访问';
@@ -139,7 +160,8 @@
 
     function isSignupValid(activity) {
         if (!activity) return false;
-        if (activity.status && activity.status !== '报名中') return false;
+        const normalizedStatus = normalizeStatus(activity.status);
+        if (normalizedStatus && normalizedStatus !== 'OPEN') return false;
         if (activity.signupEndTime && new Date() > new Date(activity.signupEndTime)) return false;
         if (activity.endTime && new Date() > new Date(activity.endTime)) return false;
         return true;

@@ -122,6 +122,27 @@
     const pageTitle = document.getElementById('page-title');
     const registerState = document.getElementById('register-state');
 
+    const STATUS_TEXT_MAP = {
+        DRAFT: '未发布',
+        OPEN: '报名中',
+        CLOSED: '已截止',
+        FINISHED: '已结束',
+        DELETED: '已删除'
+    };
+    const LEGACY_STATUS_TO_CODE = {
+        '未发布': 'DRAFT',
+        '报名中': 'OPEN',
+        '已截止': 'CLOSED',
+        '已结束': 'FINISHED',
+        '已删除': 'DELETED'
+    };
+
+    function normalizeStatus(status) {
+        if (!status) return '';
+        if (STATUS_TEXT_MAP[status]) return status;
+        return LEGACY_STATUS_TO_CODE[status] || status;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const activityId = params.get('activityId');
 
@@ -163,11 +184,13 @@
             const data = await res.json();
             pageTitle.textContent = data.title || '活动报名';
             const startEnd = formatDateTime(data.startTime) + ' ~ ' + formatDateTime(data.endTime);
+            const normalizedStatus = normalizeStatus(data.status);
+            const statusText = STATUS_TEXT_MAP[normalizedStatus] || (data.status || '');
             activityInfo.innerHTML = `
                 <div><strong>活动名称：</strong>${data.title || ''}</div>
                 <div><strong>时间：</strong>${startEnd}</div>
                 <div><strong>地点：</strong>${data.location || ''}</div>
-                <div><strong>状态：</strong>${data.status || ''}</div>
+                <div><strong>状态：</strong>${statusText}</div>
                 <div><strong>报名截止：</strong>${formatDateTime(data.signupEndTime)}</div>
                 <div><strong>报名上限：</strong>${data.maxParticipants ?? '不限'}</div>
                 <div><strong>已报名人数：</strong>${data.currentRegistrations ?? '加载中'}</div>
@@ -175,7 +198,7 @@
             const now = new Date();
             const signupDeadlinePassed = data.signupEndTime ? now > new Date(data.signupEndTime) : false;
             const ended = data.endTime ? now > new Date(data.endTime) : false;
-            const statusBlocked = data.status && data.status !== '报名中';
+            const statusBlocked = normalizedStatus && normalizedStatus !== 'OPEN';
 
             if (ended) {
                 disableRegistration('该活动已结束，无法继续报名。');

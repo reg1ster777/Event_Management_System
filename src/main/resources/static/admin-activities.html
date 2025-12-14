@@ -410,10 +410,10 @@
                     </select>
                     <select id="filter-status" class="search-input" style="min-width:120px;">
                         <option value="">全部状态</option>
-                        <option value="未发布">未发布</option>
-                        <option value="报名中">报名中</option>
-                        <option value="已截止">已截止</option>
-                        <option value="已结束">已结束</option>
+                        <option value="DRAFT">未发布</option>
+                        <option value="OPEN">报名中</option>
+                        <option value="CLOSED">已截止</option>
+                        <option value="FINISHED">已结束</option>
                     </select>
                     <input id="filter-start" class="search-input" type="datetime-local" style="min-width:160px;">
                     <input id="filter-end" class="search-input" type="datetime-local" style="min-width:160px;">
@@ -482,6 +482,21 @@
     const filterStartInput = document.getElementById('filter-start');
     const filterEndInput = document.getElementById('filter-end');
 
+    const STATUS_TEXT_MAP = {
+        DRAFT: '未发布',
+        OPEN: '报名中',
+        CLOSED: '已截止',
+        FINISHED: '已结束',
+        DELETED: '已删除'
+    };
+    const LEGACY_STATUS_TO_CODE = {
+        '未发布': 'DRAFT',
+        '报名中': 'OPEN',
+        '已截止': 'CLOSED',
+        '已结束': 'FINISHED',
+        '已删除': 'DELETED'
+    };
+
     // 登录态：当前管理员信息
     let currentUser = null;
     // 活动缓存用于筛选
@@ -545,13 +560,25 @@
         }
     }
 
-    function renderStatusTag(status) {
-        let cls = 'unpublished';
-        if (status === '报名中') cls = 'signing';
-        else if (status === '已截止') cls = 'closed';
-        else if (status === '已结束') cls = 'finished';
+    function normalizeStatus(status) {
+        if (!status) return '';
+        if (STATUS_TEXT_MAP[status]) return status;
+        return LEGACY_STATUS_TO_CODE[status] || status;
+    }
 
-        return `<span class="tag-status ${cls}">${status || ''}</span>`;
+    function getStatusLabel(status) {
+        const normalized = normalizeStatus(status);
+        return STATUS_TEXT_MAP[normalized] || normalized || '';
+    }
+
+    function renderStatusTag(status) {
+        const normalized = normalizeStatus(status);
+        let cls = 'unpublished';
+        if (normalized === 'OPEN') cls = 'signing';
+        else if (normalized === 'CLOSED') cls = 'closed';
+        else if (normalized === 'FINISHED') cls = 'finished';
+
+        return `<span class="tag-status ${cls}">${getStatusLabel(normalized)}</span>`;
     }
 
     function openDetailModal() {
@@ -592,7 +619,7 @@
             <li><span class="detail-key">类型</span><span class="detail-value">${data.type || ''}</span></li>
             <li><span class="detail-key">时间</span><span class="detail-value">${startEnd}</span></li>
             <li><span class="detail-key">地点</span><span class="detail-value">${data.location || ''}</span></li>
-            <li><span class="detail-key">状态</span><span class="detail-value">${data.status || ''}</span></li>
+            <li><span class="detail-key">状态</span><span class="detail-value">${getStatusLabel(data.status)}</span></li>
             <li><span class="detail-key">报名截止</span><span class="detail-value">${signupEnd}</span></li>
             <li><span class="detail-key">报名上限</span><span class="detail-value">${data.maxParticipants ?? '不限'}</span></li>
             <li><span class="detail-key">已报名人数</span><span class="detail-value">${data.currentRegistrations ?? '加载中'}</span></li>
@@ -643,7 +670,7 @@
             const isOwner = myUserId != null && creatorId != null && myUserId === creatorId;
             const deleteAttrs = isOwner ? '' : 'disabled title="仅可删除自己创建的活动"';
             const deleteBtn = `<button class="btn btn-danger" ${deleteAttrs} onclick="deleteActivity(${item.activityId}, ${item.createdBy ?? 'null'})">删除</button>`;
-            const publishBtn = (isOwner && item.status === '未发布')
+            const publishBtn = (isOwner && item.status === 'DRAFT')
                 ? `<button class="btn btn-primary" onclick="publishActivity(${item.activityId})">发布</button>`
                 : '';
             const currentCount = item.currentRegistrations != null ? item.currentRegistrations : 0;
@@ -712,7 +739,9 @@
             }
 
             const data = await res.json();
-            allActivities = Array.isArray(data) ? data : [];
+            allActivities = Array.isArray(data)
+                ? data.map(item => ({ ...item, status: normalizeStatus(item.status) }))
+                : [];
             if (allActivities.length === 0) {
                 activitiesSummary.textContent = '当前暂无活动记录。';
                 activitiesTbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">暂无活动，请在右侧创建新活动。</td></tr>';
@@ -765,7 +794,7 @@
 
         const payload = {
             ...target,
-            status: '报名中'
+            status: 'OPEN'
         };
 
         try {

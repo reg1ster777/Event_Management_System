@@ -1,4 +1,0 @@
--- 可执行以下语句为 activity 表新增可选字段
-ALTER TABLE activity ADD COLUMN IF NOT EXISTS live_url VARCHAR(255);
-ALTER TABLE activity ADD COLUMN IF NOT EXISTS attachment_url VARCHAR(255);
-ALTER TABLE activity ADD COLUMN IF NOT EXISTS tags VARCHAR(255);

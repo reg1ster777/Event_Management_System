@@ -16,6 +16,8 @@ import org.springframework.web.server.ResponseStatusException;
 public class RegistrationServiceImpl implements RegistrationService {
     private final RegistrationMapper registrationMapper;
     private final ActivityMapper activityMapper;
+    private static final String STATUS_OPEN = "OPEN";
+    private static final String STATUS_FINISHED = "FINISHED";
 
     public RegistrationServiceImpl(RegistrationMapper registrationMapper, ActivityMapper activityMapper) {
         this.registrationMapper = registrationMapper;
@@ -33,7 +35,8 @@ public class RegistrationServiceImpl implements RegistrationService {
         }
 
         // 状态与截止校验
-        if (!"报名中".equals(activity.getStatus())) {
+        String currentStatus = normalizeStatus(activity.getStatus());
+        if (!STATUS_OPEN.equals(currentStatus)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "当前活动不在报名中，无法报名");
         }
         LocalDateTime now = LocalDateTime.now();
@@ -110,6 +113,20 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     private boolean isDigits(String value) {
         return value != null && value.matches("\\d+");
+    }
+
+    private String normalizeStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return status;
+        }
+        return switch (status) {
+            case "未发布" -> "DRAFT";
+            case "报名中" -> STATUS_OPEN;
+            case "已截止" -> "CLOSED";
+            case "已结束" -> STATUS_FINISHED;
+            case "已删除" -> "DELETED";
+            default -> status;
+        };
     }
 
     @Override
