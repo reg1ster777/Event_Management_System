@@ -18,6 +18,8 @@ public class Activity {
     private String tags;
     private Integer createdBy;
     private LocalDateTime createdTime;
+    private Integer currentRegistrations;
+    private String createdByName;
 
     public Activity() {}
 
@@ -25,6 +27,7 @@ public class Activity {
                     LocalDateTime startTime, LocalDateTime endTime, String location,
                     LocalDateTime signupEndTime, Integer maxParticipants, String status,
                     String liveUrl, String attachmentUrl, String tags,
+                    Integer currentRegistrations, String createdByName,
                     Integer createdBy, LocalDateTime createdTime) {
         this.activityId = activityId;
         this.title = title;
@@ -39,6 +42,8 @@ public class Activity {
         this.liveUrl = liveUrl;
         this.attachmentUrl = attachmentUrl;
         this.tags = tags;
+        this.currentRegistrations = currentRegistrations;
+        this.createdByName = createdByName;
         this.createdBy = createdBy;
         this.createdTime = createdTime;
     }
@@ -87,6 +92,12 @@ public class Activity {
 
     public LocalDateTime getCreatedTime() { return createdTime; }
     public void setCreatedTime(LocalDateTime createdTime) { this.createdTime = createdTime; }
+
+    public Integer getCurrentRegistrations() { return currentRegistrations; }
+    public void setCurrentRegistrations(Integer currentRegistrations) { this.currentRegistrations = currentRegistrations; }
+
+    public String getCreatedByName() { return createdByName; }
+    public void setCreatedByName(String createdByName) { this.createdByName = createdByName; }
 
     @Override
     public String toString() {

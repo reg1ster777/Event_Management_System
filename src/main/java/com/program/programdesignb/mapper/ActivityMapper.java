@@ -25,6 +25,8 @@ public interface ActivityMapper {
                    live_url as liveUrl,
                    attachment_url as attachmentUrl,
                    tags,
+                   (select count(1) from registration r where r.activity_id = activity.activity_id) as currentRegistrations,
+                   (select username from admin_user u where u.user_id = activity.created_by) as createdByName,
                    created_by as createdBy,
                    created_time as createdTime
             from activity
@@ -46,6 +48,8 @@ public interface ActivityMapper {
                    live_url as liveUrl,
                    attachment_url as attachmentUrl,
                    tags,
+                   (select count(1) from registration r where r.activity_id = activity.activity_id) as currentRegistrations,
+                    (select username from admin_user u where u.user_id = activity.created_by) as createdByName,
                    created_by as createdBy,
                    created_time as createdTime
             from activity

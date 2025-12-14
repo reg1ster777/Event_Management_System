@@ -401,6 +401,22 @@
                 <div class="info" id="activities-summary">正在加载活动列表...</div>
                 <div class="filter-actions">
                     <button class="toggle-btn" id="toggle-my-activities">我的活动</button>
+                    <select id="filter-type" class="search-input" style="min-width:120px;">
+                        <option value="">全部类型</option>
+                        <option value="讲座">讲座</option>
+                        <option value="宣讲会">宣讲会</option>
+                        <option value="就业指导">就业指导</option>
+                        <option value="其他">其他</option>
+                    </select>
+                    <select id="filter-status" class="search-input" style="min-width:120px;">
+                        <option value="">全部状态</option>
+                        <option value="未发布">未发布</option>
+                        <option value="报名中">报名中</option>
+                        <option value="已截止">已截止</option>
+                        <option value="已结束">已结束</option>
+                    </select>
+                    <input id="filter-start" class="search-input" type="datetime-local" style="min-width:160px;">
+                    <input id="filter-end" class="search-input" type="datetime-local" style="min-width:160px;">
                     <input id="search-title" class="search-input" type="text" placeholder="按名称搜索">
                     <button class="btn btn-outline" id="search-btn">查询</button>
                     <button class="btn btn-outline" id="refresh-btn">刷新列表</button>
@@ -408,20 +424,21 @@
             </div>
 
             <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>活动名称</th>
-                        <th>类型</th>
-                        <th>时间</th>
-                        <th>地点</th>
-                        <th>状态</th>
-                        <th>报名人数上限</th>
-                        <th>操作</th>
-                    </tr>
-                    </thead>
-                    <tbody id="activities-tbody">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>活动名称</th>
+                    <th>类型</th>
+                    <th>时间</th>
+                    <th>地点</th>
+                    <th>状态</th>
+                    <th>报名上限</th>
+                    <th>已报名</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="activities-tbody">
                     <!-- JS 动态填充 -->
                     </tbody>
                 </table>
@@ -460,6 +477,10 @@
     const toggleMyActivitiesBtn = document.getElementById('toggle-my-activities');
     const searchInput = document.getElementById('search-title');
     const searchBtn = document.getElementById('search-btn');
+    const filterTypeSelect = document.getElementById('filter-type');
+    const filterStatusSelect = document.getElementById('filter-status');
+    const filterStartInput = document.getElementById('filter-start');
+    const filterEndInput = document.getElementById('filter-end');
 
     // 登录态：当前管理员信息
     let currentUser = null;
@@ -467,32 +488,43 @@
     let allActivities = [];
     let onlyMine = false;
     let keyword = '';
+    let filterType = '';
+    let filterStatus = '';
+    let filterStart = '';
+    let filterEnd = '';
 
     // 尝试从 localStorage 中读取登录时保存的管理员信息
     function initCurrentUser() {
         const stored = localStorage.getItem('adminUser');
-        if (!stored) {
-            alert('未检测到登录信息，请先登录管理员账号。');
-            window.location.href = '/login.html';
-            return;
-        }
-        try {
-            currentUser = JSON.parse(stored);
-        } catch (e) {
-            console.error(e);
-            alert('登录信息解析失败，请重新登录。');
-            window.location.href = '/login.html';
-            return;
+        if (stored) {
+            try {
+                currentUser = JSON.parse(stored);
+            } catch (e) {
+                console.error(e);
+                currentUser = null;
+            }
         }
 
+        const isLoggedIn = !!currentUser;
         if (headerAdminName) {
-            headerAdminName.textContent = '当前管理员：' + (currentUser.username || '');
+            headerAdminName.textContent = isLoggedIn
+                ? '当前管理员：' + (currentUser.username || '')
+                : '当前管理员：未登录';
         }
         if (headerLogoutBtn) {
-            headerLogoutBtn.onclick = () => {
-                localStorage.removeItem('adminUser');
-                window.location.href = '/login.html';
-            };
+            if (isLoggedIn) {
+                headerLogoutBtn.style.display = 'inline-block';
+                headerLogoutBtn.onclick = () => {
+                    localStorage.removeItem('adminUser');
+                    window.location.href = '/login.html';
+                };
+            } else {
+                headerLogoutBtn.style.display = 'none';
+            }
+        }
+        if (!isLoggedIn && toggleMyActivitiesBtn) {
+            toggleMyActivitiesBtn.disabled = true;
+            toggleMyActivitiesBtn.title = '登录后可筛选“我的活动”';
         }
     }
 
@@ -562,11 +594,12 @@
             <li><span class="detail-key">地点</span><span class="detail-value">${data.location || ''}</span></li>
             <li><span class="detail-key">状态</span><span class="detail-value">${data.status || ''}</span></li>
             <li><span class="detail-key">报名截止</span><span class="detail-value">${signupEnd}</span></li>
-            <li><span class="detail-key">报名上限</span><span class="detail-value">${data.maxParticipants ?? ''}</span></li>
+            <li><span class="detail-key">报名上限</span><span class="detail-value">${data.maxParticipants ?? '不限'}</span></li>
+            <li><span class="detail-key">已报名人数</span><span class="detail-value">${data.currentRegistrations ?? '加载中'}</span></li>
             <li><span class="detail-key">直播链接</span><span class="detail-value">${data.liveUrl ? `<a href="${data.liveUrl}" target="_blank">${data.liveUrl}</a>` : ''}</span></li>
             <li><span class="detail-key">附件链接</span><span class="detail-value">${data.attachmentUrl ? `<a href="${data.attachmentUrl}" target="_blank">${data.attachmentUrl}</a>` : ''}</span></li>
             <li><span class="detail-key">标签</span><span class="detail-value">${data.tags || ''}</span></li>
-            <li><span class="detail-key">创建人ID</span><span class="detail-value">${data.createdBy ?? ''}</span></li>
+            <li><span class="detail-key">创建人</span><span class="detail-value">${data.createdByName || data.createdBy || ''}</span></li>
             <li><span class="detail-key">创建时间</span><span class="detail-value">${createdTime}</span></li>
             <li><span class="detail-key">简介</span><span class="detail-value">${data.description || ''}</span></li>
             <li><span class="detail-key">报名链接</span><span class="detail-value">${registerLink}</span></li>
@@ -612,6 +645,8 @@
             const publishBtn = (isOwner && item.status === '未发布')
                 ? `<button class="btn btn-primary" onclick="publishActivity(${item.activityId})">发布</button>`
                 : '';
+            const currentCount = item.currentRegistrations != null ? item.currentRegistrations : 0;
+            const maxCount = item.maxParticipants != null ? item.maxParticipants : '';
 
             return `
                 <tr>
@@ -621,7 +656,8 @@
                     <td>${startEnd}</td>
                     <td>${item.location || ''}</td>
                     <td>${statusHtml}</td>
-                    <td>${item.maxParticipants != null ? item.maxParticipants : ''}</td>
+                    <td>${maxCount}</td>
+                    <td>${currentCount}</td>
                     <td>
                         <button class="btn btn-outline" onclick="viewActivityDetail(${item.activityId})">详情</button>
                         ${publishBtn}
@@ -643,6 +679,20 @@
         const kw = keyword.trim().toLowerCase();
         if (kw) {
             filtered = filtered.filter(item => (item.title || '').toLowerCase().includes(kw));
+        }
+        if (filterType) {
+            filtered = filtered.filter(item => item.type === filterType);
+        }
+        if (filterStatus) {
+            filtered = filtered.filter(item => item.status === filterStatus);
+        }
+        if (filterStart) {
+            const startDate = new Date(filterStart);
+            filtered = filtered.filter(item => item.startTime && new Date(item.startTime) >= startDate);
+        }
+        if (filterEnd) {
+            const endDate = new Date(filterEnd);
+            filtered = filtered.filter(item => item.endTime && new Date(item.endTime) <= endDate);
         }
         renderActivities(filtered);
     }
@@ -754,6 +804,22 @@
             keyword = searchInput.value || '';
             applyFilters();
         }
+    });
+    filterTypeSelect?.addEventListener('change', () => {
+        filterType = filterTypeSelect.value || '';
+        applyFilters();
+    });
+    filterStatusSelect?.addEventListener('change', () => {
+        filterStatus = filterStatusSelect.value || '';
+        applyFilters();
+    });
+    filterStartInput?.addEventListener('change', () => {
+        filterStart = filterStartInput.value || '';
+        applyFilters();
+    });
+    filterEndInput?.addEventListener('change', () => {
+        filterEnd = filterEndInput.value || '';
+        applyFilters();
     });
 
     // 先初始化当前登录管理员，再加载活动列表

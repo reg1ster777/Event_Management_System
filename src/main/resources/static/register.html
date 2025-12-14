@@ -167,6 +167,8 @@
                 <div><strong>地点：</strong>${data.location || ''}</div>
                 <div><strong>状态：</strong>${data.status || ''}</div>
                 <div><strong>报名截止：</strong>${formatDateTime(data.signupEndTime)}</div>
+                <div><strong>报名上限：</strong>${data.maxParticipants ?? '不限'}</div>
+                <div><strong>已报名人数：</strong>${data.currentRegistrations ?? '加载中'}</div>
             `;
             const now = new Date();
             const signupDeadlinePassed = data.signupEndTime ? now > new Date(data.signupEndTime) : false;
