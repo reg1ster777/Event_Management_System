@@ -73,3 +73,40 @@ programDesignB/
 - 对前端页面引入模块化构建（如 Vite/React）或使用组件库提升体验。
 
 如需更多细节，可阅读对应包下的 Java 代码以及 `static` 目录中的页面脚本。
+
+
+## 服务器更新
+
+1. **打包生成新 JAR**
+```powershell
+.\mvnw.cmd clean package -DskipTests
+```
+
+2. **上传到服务器**
+```powershell
+scp .\target\programDesignB-0.0.1-SNAPSHOT.jar admin@39.98.87.220:/www/wwwroot/programDesignB/app/app.jar.new
+```
+
+3. **登录服务器，备份旧包并原子替换**
+```bash
+cd /www/wwwroot/programDesignB/app
+sudo cp -a app.jar app.jar.bak.$(date +%F_%H%M%S)
+sudo mv -f app.jar.new app.jar
+sudo chown admin:admin app.jar
+```
+
+4. **（可选）同步配置文件**
+```powershell
+scp .\src\main\resources\application-prod.yml admin@39.98.87.220:/www/wwwroot/programDesignB/app/application-prod.yml
+```
+
+5. **（可选）执行数据库脚本**
+```bash
+mysql -uroot -p -S /tmp/mysql.sock campus < /www/wwwroot/programDesignB/sql/schema_fixed.sql
+```
+
+6. **重启 systemd 服务**
+```bash
+sudo systemctl restart programdesignb
+sudo systemctl status programdesignb --no-pager
+```

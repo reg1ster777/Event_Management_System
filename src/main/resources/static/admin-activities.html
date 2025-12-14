@@ -602,6 +602,7 @@
             <li><span class="detail-key">创建人</span><span class="detail-value">${data.createdByName || data.createdBy || ''}</span></li>
             <li><span class="detail-key">创建时间</span><span class="detail-value">${createdTime}</span></li>
             <li><span class="detail-key">简介</span><span class="detail-value">${data.description || ''}</span></li>
+            <li><span class="detail-key">宣传海报</span><span class="detail-value"><a href="/poster.html?activityId=${data.activityId ?? ''}" target="_blank">查看海报</a></span></li>
             <li><span class="detail-key">报名链接</span><span class="detail-value">${registerLink}</span></li>
         `;
     }
