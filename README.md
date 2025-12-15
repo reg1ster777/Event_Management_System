@@ -1,5 +1,8 @@
 # ProgramDesignB 校园活动管理平台
 
+## 远程网站
+http://39.98.87.220/
+
 ## 项目概述
 - 基于 Spring Boot + MyBatis + MySQL 的后端，提供活动、报名、签到、管理员帐号等 REST API。
 - 前端使用纯静态 HTML/JavaScript，部署在 `src/main/resources/static` 下，涵盖首页、管理员工作台、报名页等场景。
@@ -57,8 +60,8 @@ programDesignB/
 1. **准备环境**：安装 JDK 17+、Maven、MySQL 8；新建 `campus` 数据库。
 2. **初始化数据**：执行 `src/main/resources/db` 下的 SQL（根据需要扩展表结构）。
 3. **配置检查**：若数据库连接信息不同，请修改 `application-dev.yml` 中的数据源配置。
-4. **启动服务**：在项目根目录运行 `mvn spring-boot:run` 或 `mvn clean package` 后执行 `java -jar target/program-design-b-*.jar`。
-5. **访问页面**：浏览器打开 `http://localhost:8080/index.html`、`/login.html` 等静态页面，或使用 API 客户端调试 REST 接口。
+4. **启动服务**：在项目根目录运行 `mvn spring-boot:run`，或在 IDE 中直接运行 `src/main/java/com/program/programdesignb/ProgramDesignBApplication.java`，也可以先执行 `mvn clean package` 后再运行 `java -jar target/program-design-b-*.jar`。
+5. **访问页面**：浏览器打开 `http://localhost:8088/index.html`、`/login.html` 等静态页面，或使用 API 客户端调试 REST 接口。
 
 ## 典型使用流程
 1. 管理员登录（或创建新账号）→ 进入 `admin-activities.html` 管理后台。
