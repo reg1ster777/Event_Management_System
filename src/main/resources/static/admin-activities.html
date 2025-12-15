@@ -595,22 +595,25 @@
         const startEnd = formatDateTime(data.startTime) + ' ~ ' + formatDateTime(data.endTime);
         const signupEnd = formatDateTime(data.signupEndTime);
         const createdTime = formatDateTime(data.createdTime);
-        let registerLink = '';
+        const normalizedStatus = normalizeStatus(data.status);
         const now = new Date();
-        if (data.signupEndTime) {
-            const signupEndDate = new Date(data.signupEndTime);
-            if (now < signupEndDate) {
-                registerLink = `<a href="/register.html?activityId=${data.activityId ?? ''}" target="_blank">打开报名页</a>`;
-            } else {
-                registerLink = '<span style="color:#999;">报名已截止，链接关闭</span>';
-            }
-        } else if (data.startTime) {
-            const start = new Date(data.startTime);
-            registerLink = now < start
-                ? `<a href="/register.html?activityId=${data.activityId ?? ''}" target="_blank">打开报名页</a>`
-                : '<span style="color:#999;">活动已开始，链接关闭</span>';
+        let registerLink = '';
+        let posterLink = '';
+        const canSignUp = normalizedStatus === 'OPEN'
+            && data.signupEndTime
+            && now <= new Date(data.signupEndTime);
+        if (canSignUp) {
+            registerLink = `<a href="/register.html?activityId=${data.activityId ?? ''}" target="_blank">打开报名页</a>`;
+            posterLink = `<a href="/poster.html?activityId=${data.activityId ?? ''}" target="_blank">查看海报</a>`;
         } else {
-            registerLink = '<span style="color:#999;">未设置报名截止时间</span>';
+            const reason = normalizedStatus === 'OPEN'
+                ? '报名已截止，链接关闭'
+                : normalizedStatus === 'DRAFT'
+                    ? '未开放报名'
+                    : '报名已结束';
+            const greyText = `<span style="color:#999;">${reason}</span>`;
+            registerLink = greyText;
+            posterLink = greyText;
         }
 
         detailList.innerHTML = `
@@ -629,7 +632,7 @@
             <li><span class="detail-key">创建人</span><span class="detail-value">${data.createdByName || data.createdBy || ''}</span></li>
             <li><span class="detail-key">创建时间</span><span class="detail-value">${createdTime}</span></li>
             <li><span class="detail-key">简介</span><span class="detail-value">${data.description || ''}</span></li>
-            <li><span class="detail-key">宣传海报</span><span class="detail-value"><a href="/poster.html?activityId=${data.activityId ?? ''}" target="_blank">查看海报</a></span></li>
+            <li><span class="detail-key">宣传海报</span><span class="detail-value">${posterLink}</span></li>
             <li><span class="detail-key">报名链接</span><span class="detail-value">${registerLink}</span></li>
         `;
     }
@@ -668,10 +671,14 @@
             const statusHtml = renderStatusTag(item.status);
             const creatorId = item.createdBy != null ? Number(item.createdBy) : null;
             const isOwner = myUserId != null && creatorId != null && myUserId === creatorId;
-            const deleteAttrs = isOwner ? '' : 'disabled title="仅可删除自己创建的活动"';
-            const deleteBtn = `<button class="btn btn-danger" ${deleteAttrs} onclick="deleteActivity(${item.activityId}, ${item.createdBy ?? 'null'})">删除</button>`;
+            const deleteBtn = isOwner
+                ? `<button class="btn btn-danger" onclick="deleteActivity(${item.activityId}, ${item.createdBy ?? 'null'})">删除</button>`
+                : '';
             const publishBtn = (isOwner && item.status === 'DRAFT')
                 ? `<button class="btn btn-primary" onclick="publishActivity(${item.activityId})">发布</button>`
+                : '';
+            const editBtn = isOwner
+                ? `<button class="btn btn-outline" onclick="editActivity(${item.activityId})">编辑</button>`
                 : '';
             const currentCount = item.currentRegistrations != null ? item.currentRegistrations : 0;
             const maxCount = item.maxParticipants != null ? item.maxParticipants : '';
@@ -688,6 +695,7 @@
                     <td>${currentCount}</td>
                     <td>
                         <button class="btn btn-outline" onclick="viewActivityDetail(${item.activityId})">详情</button>
+                        ${editBtn}
                         ${publishBtn}
                         ${deleteBtn}
                     </td>
@@ -706,7 +714,11 @@
         }
         const kw = keyword.trim().toLowerCase();
         if (kw) {
-            filtered = filtered.filter(item => (item.title || '').toLowerCase().includes(kw));
+            filtered = filtered.filter(item => {
+                const title = (item.title || '').toLowerCase();
+                const tags = (item.tags || '').toLowerCase();
+                return title.includes(kw) || tags.includes(kw);
+            });
         }
         if (filterType) {
             filtered = filtered.filter(item => item.type === filterType);
@@ -798,7 +810,7 @@
         };
 
         try {
-            const res = await fetch('/activities/' + id, {
+            const res = await fetch(`/activities/${id}?requesterId=${encodeURIComponent(myUserId)}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -814,6 +826,10 @@
             console.error(e);
             showListMessage('发布请求失败，请检查网络或后端日志。', 'error');
         }
+    }
+
+    function editActivity(id) {
+        window.location.href = `/admin-create-activity.html?activityId=${encodeURIComponent(id)}`;
     }
 
     refreshBtn.addEventListener('click', loadActivities);

@@ -50,7 +50,18 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public Activity updateActivity(Activity activity) {
+    public Activity updateActivity(Activity activity, Integer requesterId) {
+        if (activity == null || activity.getActivityId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "活动ID不能为空");
+        }
+        Activity existing = activityMapper.findById(activity.getActivityId());
+        if (existing == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "活动不存在");
+        }
+        if (existing.getCreatedBy() == null || requesterId == null || !existing.getCreatedBy().equals(requesterId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "仅允许编辑自己创建的活动");
+        }
+        activity.setCreatedBy(existing.getCreatedBy());
         validateActivityTime(activity, false);
         activityMapper.update(activity);
         return refreshStatus(activityMapper.findById(activity.getActivityId()));

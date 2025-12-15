@@ -182,6 +182,10 @@
     const createForm = document.getElementById('create-form');
     const createBtn = document.getElementById('create-btn');
     const createMessage = document.getElementById('create-message');
+    const params = new URLSearchParams(window.location.search);
+    const editingActivityId = params.get('activityId');
+    const isEditing = !!editingActivityId;
+    let editingStatus = null;
     let currentUser = null;
 
     function initCurrentUser() {
@@ -217,6 +221,70 @@
         if (type === 'success') createMessage.classList.add('success');
     }
 
+    function setFormDisabled(disabled) {
+        const controls = createForm.querySelectorAll('input, select, textarea, button');
+        controls.forEach(el => {
+            if (el.id === 'creatorUsername') return;
+            if (el.id === 'createdById') return;
+            if (el === createBtn) {
+                el.disabled = disabled;
+            } else {
+                el.disabled = disabled;
+            }
+        });
+    }
+
+    function prepareEditUI() {
+        if (!isEditing) return;
+        document.title = '编辑活动';
+        const titleEl = document.querySelector('.card-title');
+        if (titleEl) titleEl.textContent = '编辑活动';
+        const descEl = document.querySelector('.card-desc');
+        if (descEl) descEl.textContent = '仅允许编辑自己创建的活动，保存后会回到活动列表。';
+        if (createBtn) createBtn.textContent = '保存修改';
+    }
+
+    function formatForInput(value) {
+        if (!value) return '';
+        return value.toString().replace('T', ' ').replace('Z', '').trim().replace(' ', 'T').substring(0, 16);
+    }
+
+    async function loadActivityForEdit(id) {
+        try {
+            const res = await fetch('/activities/' + id);
+            if (!res.ok) {
+                showCreateMessage('加载活动信息失败，状态码：' + res.status, 'error');
+                return;
+            }
+            const data = await res.json();
+            const creatorId = data.createdBy != null ? Number(data.createdBy) : null;
+            const myId = currentUser && currentUser.userId != null ? Number(currentUser.userId) : null;
+            if (creatorId == null || myId == null || creatorId !== myId) {
+                showCreateMessage('仅允许编辑自己创建的活动。', 'error');
+                setFormDisabled(true);
+                return;
+            }
+            editingStatus = data.status || 'DRAFT';
+            document.getElementById('title').value = data.title || '';
+            document.getElementById('type').value = data.type || '';
+            document.getElementById('location').value = data.location || '';
+            document.getElementById('startTime').value = formatForInput(data.startTime);
+            document.getElementById('endTime').value = formatForInput(data.endTime);
+            document.getElementById('signupEndTime').value = formatForInput(data.signupEndTime);
+            document.getElementById('maxParticipants').value = data.maxParticipants != null ? data.maxParticipants : '';
+            document.getElementById('description').value = data.description || '';
+            document.getElementById('liveUrl').value = data.liveUrl || '';
+            document.getElementById('attachmentUrl').value = data.attachmentUrl || '';
+            document.getElementById('tags').value = data.tags || '';
+            const createdByIdInput = document.getElementById('createdById');
+            if (createdByIdInput) createdByIdInput.value = creatorId;
+            showCreateMessage('已载入活动信息，可编辑后保存。', 'success');
+        } catch (e) {
+            console.error(e);
+            showCreateMessage('加载活动信息失败，请检查网络。', 'error');
+        }
+    }
+
     createForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         showCreateMessage('', '');
@@ -247,7 +315,7 @@
             showCreateMessage('时间格式有误，请重新选择。', 'error');
             return;
         }
-        if (startDate <= now) {
+        if (!isEditing && startDate <= now) {
             showCreateMessage('开始时间必须晚于当前时间。', 'error');
             return;
         }
@@ -274,7 +342,7 @@
             location,
             signupEndTime: fixDateTime(signupEndTime),
             maxParticipants: Number(maxParticipants),
-            status: 'DRAFT',
+            status: isEditing ? (editingStatus || 'DRAFT') : 'DRAFT',
             liveUrl: liveUrl || null,
             attachmentUrl: attachmentUrl || null,
             tags: tags || null,
@@ -282,30 +350,43 @@
         };
 
         createBtn.disabled = true;
-        showCreateMessage('正在提交新活动...', '');
+        showCreateMessage(isEditing ? '正在保存修改...' : '正在提交新活动...', '');
         try {
-            const res = await fetch('/activities', {
-                method: 'POST',
+            const url = isEditing
+                ? `/activities/${editingActivityId}?requesterId=${encodeURIComponent(createdBy)}`
+                : '/activities';
+            const method = isEditing ? 'PUT' : 'POST';
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
-                const newActivity = await res.json();
-                showCreateMessage('创建成功！新活动 ID = ' + newActivity.activityId, 'success');
+                const saved = await res.json();
+                if (isEditing) {
+                    showCreateMessage('保存成功！', 'success');
+                } else {
+                    showCreateMessage('创建成功！新活动 ID = ' + saved.activityId, 'success');
+                }
                 setTimeout(() => window.location.href = '/admin-activities.html', 600);
             } else {
                 const text = await res.text();
-                showCreateMessage('创建失败，状态码：' + res.status + '，详情：' + text, 'error');
+                const actionWord = isEditing ? '保存失败' : '创建失败';
+                showCreateMessage(actionWord + '，状态码：' + res.status + '，详情：' + text, 'error');
             }
         } catch (e) {
             console.error(e);
-            showCreateMessage('创建请求失败，请检查网络或后端日志。', 'error');
+            showCreateMessage(isEditing ? '保存请求失败，请检查网络或后端日志。' : '创建请求失败，请检查网络或后端日志。', 'error');
         } finally {
             createBtn.disabled = false;
         }
     });
 
     initCurrentUser();
+    prepareEditUI();
+    if (isEditing) {
+        loadActivityForEdit(editingActivityId);
+    }
 </script>
 </body>
 </html>
