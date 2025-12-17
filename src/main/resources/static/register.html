@@ -7,7 +7,9 @@
         body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-            background: #f5f5f5;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #4f46e5, #9333ea);
+            padding: 24px 12px;
         }
         .container {
             max-width: 720px;
@@ -15,6 +17,7 @@
             background: #fff;
             border-radius: 10px;
             padding: 20px 22px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
             box-shadow: 0 6px 18px rgba(0,0,0,0.08);
             border: 1px solid #eee;
         }
@@ -28,8 +31,8 @@
             font-size: 13px;
         }
         .info-block {
-            background: #f8fbff;
-            border: 1px solid #e5efff;
+            background: rgba(255,255,255,0.85);
+            border: 1px solid rgba(79,70,229,0.15);
             padding: 12px;
             border-radius: 8px;
             margin-bottom: 16px;
@@ -50,18 +53,19 @@
             transition: border-color .15s ease, box-shadow .15s ease;
         }
         input:focus, textarea:focus {
-            border-color: #1677ff;
-            box-shadow: 0 0 0 2px rgba(22,119,255,0.15);
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79,70,229,0.15);
         }
         .btn {
             width: 100%;
             padding: 10px 14px;
             border: none;
             border-radius: 999px;
-            background: #1677ff;
+            background: linear-gradient(135deg, #4f46e5, #9333ea);
             color: #fff;
             font-size: 14px;
             cursor: pointer;
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.25);
         }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .message { min-height: 18px; font-size: 12px; margin-top: 8px; }
@@ -84,13 +88,11 @@
         </div>
         <div class="form-group">
             <label for="phone">手机号 *</label>
-            <input id="phone" name="phone" required placeholder="用于联系与查重"
-                   inputmode="numeric" pattern="[0-9]+" title="仅允许输入数字">
+            <input id="phone" name="phone" required placeholder="用于联系与查重">
         </div>
         <div class="form-group">
             <label for="studentNo">学号 *</label>
-            <input id="studentNo" name="studentNo" required placeholder="用于防止重复报名"
-                   inputmode="numeric" pattern="[0-9]+" title="仅允许输入数字">
+            <input id="studentNo" name="studentNo" placeholder="用于防止重复报名">
         </div>
         <div class="form-group">
             <label for="school">学校</label>
@@ -122,27 +124,6 @@
     const pageTitle = document.getElementById('page-title');
     const registerState = document.getElementById('register-state');
 
-    const STATUS_TEXT_MAP = {
-        DRAFT: '未发布',
-        OPEN: '报名中',
-        CLOSED: '已截止',
-        FINISHED: '已结束',
-        DELETED: '已删除'
-    };
-    const LEGACY_STATUS_TO_CODE = {
-        '未发布': 'DRAFT',
-        '报名中': 'OPEN',
-        '已截止': 'CLOSED',
-        '已结束': 'FINISHED',
-        '已删除': 'DELETED'
-    };
-
-    function normalizeStatus(status) {
-        if (!status) return '';
-        if (STATUS_TEXT_MAP[status]) return status;
-        return LEGACY_STATUS_TO_CODE[status] || status;
-    }
-
     const params = new URLSearchParams(window.location.search);
     const activityId = params.get('activityId');
 
@@ -172,6 +153,48 @@
         form.style.display = 'block';
     }
 
+    // async function loadActivity() {
+    //     if (!activityId) return;
+    //     try {
+    //         const res = await fetch('/activities/' + activityId);
+    //         if (!res.ok) {
+    //             activityInfo.textContent = '未找到活动，状态码：' + res.status;
+    //             form.style.display = 'none';
+    //             return;
+    //         }
+    //         const data = await res.json();
+    //         pageTitle.textContent = data.title || '活动报名';
+    //         const startEnd = formatDateTime(data.startTime) + ' ~ ' + formatDateTime(data.endTime);
+    //         activityInfo.innerHTML = `
+    //             <div><strong>活动名称：</strong>${data.title || ''}</div>
+    //             <div><strong>时间：</strong>${startEnd}</div>
+    //             <div><strong>地点：</strong>${data.location || ''}</div>
+    //             <div><strong>状态：</strong>${data.status || ''}</div>
+    //             <div><strong>报名截止：</strong>${formatDateTime(data.signupEndTime)}</div>
+    //             <div><strong>报名上限：</strong>${data.maxParticipants ?? '不限'}</div>
+    //             <div><strong>已报名人数：</strong>${data.currentRegistrations ?? '加载中'}</div>
+    //         `;
+    //         const now = new Date();
+    //         const signupDeadlinePassed = data.signupEndTime ? now > new Date(data.signupEndTime) : false;
+    //         const ended = data.endTime ? now > new Date(data.endTime) : false;
+    //         const statusBlocked = data.status && data.status !== '报名中';
+    //
+    //         if (ended) {
+    //             disableRegistration('该活动已结束，无法继续报名。');
+    //         } else if (signupDeadlinePassed) {
+    //             disableRegistration('报名已截止，无法继续报名。');
+    //         } else if (statusBlocked) {
+    //             disableRegistration('当前活动未开放报名。');
+    //         } else {
+    //             enableRegistration();
+    //         }
+    //     } catch (e) {
+    //         console.error(e);
+    //         activityInfo.textContent = '加载活动信息失败，请稍后再试。';
+    //         form.style.display = 'none';
+    //     }
+    // }
+
     async function loadActivity() {
         if (!activityId) return;
         try {
@@ -184,28 +207,57 @@
             const data = await res.json();
             pageTitle.textContent = data.title || '活动报名';
             const startEnd = formatDateTime(data.startTime) + ' ~ ' + formatDateTime(data.endTime);
-            const normalizedStatus = normalizeStatus(data.status);
-            const statusText = STATUS_TEXT_MAP[normalizedStatus] || (data.status || '');
             activityInfo.innerHTML = `
-                <div><strong>活动名称：</strong>${data.title || ''}</div>
-                <div><strong>时间：</strong>${startEnd}</div>
-                <div><strong>地点：</strong>${data.location || ''}</div>
-                <div><strong>状态：</strong>${statusText}</div>
-                <div><strong>报名截止：</strong>${formatDateTime(data.signupEndTime)}</div>
-                <div><strong>报名上限：</strong>${data.maxParticipants ?? '不限'}</div>
-                <div><strong>已报名人数：</strong>${data.currentRegistrations ?? '加载中'}</div>
-            `;
-            const now = new Date();
-            const signupDeadlinePassed = data.signupEndTime ? now > new Date(data.signupEndTime) : false;
-            const ended = data.endTime ? now > new Date(data.endTime) : false;
-            const statusBlocked = normalizedStatus && normalizedStatus !== 'OPEN';
+            <div><strong>活动名称：</strong>${data.title || ''}</div>
+            <div><strong>时间：</strong>${startEnd}</div>
+            <div><strong>地点：</strong>${data.location || ''}</div>
+            <div><strong>状态：</strong>${data.status || ''}</div>
+            <div><strong>报名截止：</strong>${formatDateTime(data.signupEndTime)}</div>
+            <div><strong>报名上限：</strong>${data.maxParticipants ?? '不限'}</div>
+            <div><strong>已报名人数：</strong>${data.currentRegistrations ?? '加载中'}</div>
+        `;
 
-            if (ended) {
-                disableRegistration('该活动已结束，无法继续报名。');
-            } else if (signupDeadlinePassed) {
-                disableRegistration('报名已截止，无法继续报名。');
-            } else if (statusBlocked) {
-                disableRegistration('当前活动未开放报名。');
+            // 添加状态标准化函数（也可以放在全局）
+            function normalizeStatus(status) {
+                const statusMap = {
+                    'DRAFT': 'DRAFT',
+                    'OPEN': 'OPEN',
+                    'CLOSED': 'CLOSED',
+                    'FINISHED': 'FINISHED',
+                    '未发布': 'DRAFT',
+                    '报名中': 'OPEN',
+                    '已截止': 'CLOSED',
+                    '已结束': 'FINISHED'
+                };
+                return statusMap[status] || status;
+            }
+
+            const now = new Date();
+            const signupDeadline = data.signupEndTime ? new Date(data.signupEndTime) : null;
+            const activityEnd = data.endTime ? new Date(data.endTime) : null;
+            const normalizedStatus = normalizeStatus(data.status);
+
+            let canRegister = true;
+            let blockReason = '';
+
+            // 检查活动是否已结束
+            if (activityEnd && now > activityEnd) {
+                canRegister = false;
+                blockReason = '该活动已结束，无法继续报名。';
+            }
+            // 检查报名是否已截止（使用 >，不包含等于）
+            else if (signupDeadline && now > signupDeadline) {
+                canRegister = false;
+                blockReason = '报名已截止，无法继续报名。';
+            }
+            // 检查活动状态
+            else if (normalizedStatus && normalizedStatus !== 'OPEN') {
+                canRegister = false;
+                blockReason = '当前活动未开放报名。';
+            }
+
+            if (!canRegister) {
+                disableRegistration(blockReason);
             } else {
                 enableRegistration();
             }
@@ -238,17 +290,8 @@
             email: document.getElementById('email').value.trim()
         };
 
-        if (!payload.name || !payload.phone || !payload.studentNo) {
-            showFormMessage('姓名、手机号、学号均为必填项。', 'error');
-            return;
-        }
-        const digitRegex = /^\d+$/;
-        if (!digitRegex.test(payload.phone)) {
-            showFormMessage('手机号只能输入数字。', 'error');
-            return;
-        }
-        if (!digitRegex.test(payload.studentNo)) {
-            showFormMessage('学号只能输入数字。', 'error');
+        if (!payload.name || !payload.phone) {
+            showFormMessage('姓名和手机号为必填项。', 'error');
             return;
         }
 
@@ -265,21 +308,12 @@
                 showFormMessage('报名成功！', 'success');
                 form.reset();
             } else {
-                const raw = await res.text();
-                let errMsg = '报名失败';
-                if (raw) {
-                    try {
-                        const parsed = JSON.parse(raw);
-                        if (parsed && parsed.message) {
-                            errMsg = parsed.message;
-                        } else {
-                            errMsg = raw;
-                        }
-                    } catch (parseErr) {
-                        errMsg = raw;
-                    }
+                const text = await res.text();
+                if (text && text.includes('报名人数已满')) {
+                    showFormMessage('报名人数已满', 'error');
+                } else {
+                    showFormMessage('报名失败：' + text, 'error');
                 }
-                showFormMessage(errMsg, 'error');
             }
         } catch (err) {
             console.error(err);

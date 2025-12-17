@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活动签到</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+            font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            width: min(440px, 90vw);
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+            padding: 32px 28px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #333;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .info-item {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #333;
+        }
+        .info-item strong {
+            color: #4f46e5;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #9333ea);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+        }
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #4f46e5;
+            border: 2px solid #4f46e5;
+        }
+        .btn-secondary:hover {
+            background: #4f46e5;
+            color: #fff;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .message {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            text-align: center;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .location-status {
+            font-size: 13px;
+            color: #666;
+            margin-top: 8px;
+            text-align: center;
+        }
+        .switch-mode {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 13px;
+        }
+        .switch-mode a {
+            color: #4f46e5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 id="page-title">活动签到</h1>
+    <p class="subtitle">请输入手机号和学号完成签到</p>
+
+    <div class="info-card" id="activity-info">
+        <div class="info-item">加载中...</div>
+    </div>
+
+    <form id="checkin-form">
+        <div class="form-group">
+            <label for="phone">手机号 *</label>
+            <input
+                    type="tel"
+                    id="phone"
+                    placeholder="请输入报名时使用的手机号"
+                    pattern="[0-9]*"
+                    inputmode="numeric"
+                    required
+            >
+        </div>
+        <div class="form-group">
+            <label for="studentNo">学号 *</label>
+            <input
+                    type="tel"
+                    id="studentNo"
+                    placeholder="请输入报名时填写的学号"
+                    pattern="[0-9]*"
+                    inputmode="numeric"
+                    required
+            >
+        </div>
+
+        <div class="form-group hidden" id="location-group">
+            <label>当前位置</label>
+            <div class="location-status" id="location-status">正在获取位置...</div>
+        </div>
+
+        <div class="btn-group">
+            <button type="button" class="btn btn-secondary" id="basic-checkin-btn">基础签到</button>
+            <button type="button" class="btn btn-primary" id="location-checkin-btn">定位签到</button>
+        </div>
+
+        <div class="message hidden" id="message"></div>
+    </form>
+
+    <div class="switch-mode">
+        签到遇到问题？<a href="#" id="help-link">查看帮助</a>
+    </div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const activityId = params.get('activityId');
+    const token = params.get('token');
+
+    const activityInfo = document.getElementById('activity-info');
+    const phoneInput = document.getElementById('phone');
+    const studentNoInput = document.getElementById('studentNo');
+    const basicCheckinBtn = document.getElementById('basic-checkin-btn');
+    const locationCheckinBtn = document.getElementById('location-checkin-btn');
+    const messageDiv = document.getElementById('message');
+    const locationGroup = document.getElementById('location-group');
+    const locationStatus = document.getElementById('location-status');
+    const pageTitle = document.getElementById('page-title');
+
+    let currentPosition = null;
+
+    if (!activityId || !token) {
+        showMessage('缺少必要参数，请通过签到二维码进入', 'error');
+        basicCheckinBtn.disabled = true;
+        locationCheckinBtn.disabled = true;
+    } else {
+        loadActivity();
+        validateToken();
+    }
+
+    async function loadActivity() {
+        try {
+            const res = await fetch('/activities/' + activityId);
+            if (!res.ok) throw new Error('加载失败');
+
+            const activity = await res.json();
+            pageTitle.textContent = activity.title + ' - 签到';
+
+            activityInfo.innerHTML = `
+                    <div class="info-item"><strong>活动名称：</strong>${activity.title}</div>
+                    <div class="info-item"><strong>活动时间：</strong>${formatTime(activity.startTime)}</div>
+                    <div class="info-item"><strong>活动地点：</strong>${activity.location || '待定'}</div>
+                `;
+        } catch (e) {
+            console.error(e);
+            activityInfo.innerHTML = '<div class="info-item">加载活动信息失败</div>';
+        }
+    }
+
+    async function validateToken() {
+        try {
+            const res = await fetch(`/api/poster/validate-token?token=${encodeURIComponent(token)}`);
+            const data = await res.json();
+
+            if (!data.valid) {
+                showMessage('签到码已失效，请联系活动管理员重新获取', 'error');
+                basicCheckinBtn.disabled = true;
+                locationCheckinBtn.disabled = true;
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('验证签到码失败，请稍后重试', 'error');
+        }
+    }
+
+    basicCheckinBtn.addEventListener('click', () => performCheckin(false));
+    locationCheckinBtn.addEventListener('click', () => performCheckin(true));
+
+    async function performCheckin(useLocation) {
+        const phone = phoneInput.value.trim();
+        const studentNo = studentNoInput.value.trim();
+
+        if (!phone || !studentNo) {
+            showMessage('请输入手机号和学号', 'error');
+            return;
+        }
+
+        if (!/^\d+$/.test(phone)) {
+            showMessage('手机号格式不正确', 'error');
+            return;
+        }
+        if (!/^\d+$/.test(studentNo)) {
+            showMessage('学号格式不正确', 'error');
+            return;
+        }
+
+        if (useLocation) {
+            locationGroup.classList.remove('hidden');
+
+            if (!currentPosition) {
+                locationStatus.textContent = '正在获取位置...';
+                try {
+                    currentPosition = await getCurrentPosition();
+                    locationStatus.textContent = `位置已获取（${currentPosition.latitude.toFixed(6)}, ${currentPosition.longitude.toFixed(6)}）`;
+                } catch (e) {
+                    locationStatus.textContent = '获取位置失败：' + e.message;
+                    showMessage('请开启定位权限后重试', 'error');
+                    return;
+                }
+            }
+        }
+
+        basicCheckinBtn.disabled = true;
+        locationCheckinBtn.disabled = true;
+        showMessage('正在签到...', 'info');
+
+        try {
+            const url = useLocation ? '/api/checkin/with-location' : '/api/checkin/by-phone';
+            const payload = {
+                activityId: parseInt(activityId),
+                phone: phone,
+                studentNo: studentNo,
+                token: token,
+                location: useLocation ? '现场签到' : '手机签到'
+            };
+
+            if (useLocation && currentPosition) {
+                payload.latitude = currentPosition.latitude;
+                payload.longitude = currentPosition.longitude;
+            }
+
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                showMessage('签到成功！', 'success');
+                phoneInput.value = '';
+                studentNoInput.value = '';
+                setTimeout(() => {
+                    if (confirm('签到成功！是否继续为其他人签到？')) {
+                        messageDiv.classList.add('hidden');
+                        basicCheckinBtn.disabled = false;
+                        locationCheckinBtn.disabled = false;
+                    }
+                }, 1500);
+            } else {
+                const text = await res.text();
+                let errMsg = '签到失败';
+                try {
+                    const json = JSON.parse(text);
+                    errMsg = json.message || text;
+                } catch (e) {
+                    errMsg = text;
+                }
+                showMessage(errMsg, 'error');
+                basicCheckinBtn.disabled = false;
+                locationCheckinBtn.disabled = false;
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，请稍后重试', 'error');
+            basicCheckinBtn.disabled = false;
+            locationCheckinBtn.disabled = false;
+        }
+    }
+
+    function getCurrentPosition() {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject(new Error('浏览器不支持定位功能'));
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    });
+                },
+                (error) => {
+                    let msg = '未知错误';
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            msg = '用户拒绝了定位请求';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            msg = '位置信息不可用';
+                            break;
+                        case error.TIMEOUT:
+                            msg = '定位请求超时';
+                            break;
+                    }
+                    reject(new Error(msg));
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        });
+    }
+
+    function showMessage(text, type) {
+        messageDiv.textContent = text;
+        messageDiv.className = 'message ' + type;
+        messageDiv.classList.remove('hidden');
+    }
+
+    function formatTime(dateStr) {
+        if (!dateStr) return '-';
+        return dateStr.toString().replace('T', ' ').substring(0, 16);
+    }
+
+    document.getElementById('help-link').addEventListener('click', (e) => {
+        e.preventDefault();
+        alert('签到帮助：\n\n1. 请确保使用报名时填写的手机号\n2. 定位签到需要开启浏览器定位权限\n3. 如遇问题请联系现场工作人员');
+    });
+</script>
+</body>
+</html>

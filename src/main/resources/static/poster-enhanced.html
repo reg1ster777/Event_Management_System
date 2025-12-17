@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活动宣传海报</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+            font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .poster {
+            width: min(420px, 90vw);
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .poster-header {
+            background: linear-gradient(135deg, #4f46e5, #9333ea);
+            padding: 36px 24px;
+            color: #fff;
+            text-align: center;
+        }
+        .poster-header h1 {
+            font-size: 26px;
+            line-height: 1.3;
+            margin-bottom: 12px;
+        }
+        .poster-header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .poster-body {
+            padding: 28px 24px;
+        }
+        .info-section {
+            margin-bottom: 20px;
+        }
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+        .info-item .icon {
+            font-size: 18px;
+            color: #4f46e5;
+        }
+        .qr-section {
+            text-align: center;
+            padding: 24px 0;
+            border-top: 2px dashed #e0e0e0;
+        }
+        .qr-section h3 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        .qr-box {
+            width: 240px;
+            height: 240px;
+            margin: 0 auto;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        #qr-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .qr-tip {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #666;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-expired {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        .error {
+            text-align: center;
+            padding: 40px 20px;
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+<div class="poster" id="poster">
+    <div class="poster-header">
+        <h1 id="poster-title">活动宣传海报</h1>
+        <p class="subtitle">扫码报名参加活动</p>
+    </div>
+
+    <div class="poster-body" id="poster-content">
+        <div class="loading">正在加载活动信息...</div>
+    </div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const activityId = params.get('activityId');
+    const posterContent = document.getElementById('poster-content');
+    const posterTitle = document.getElementById('poster-title');
+
+    if (!activityId) {
+        posterContent.innerHTML = '<div class="error">缺少活动ID，请通过正确的链接访问</div>';
+    } else {
+        loadPoster();
+    }
+
+    async function loadPoster() {
+        try {
+            const res = await fetch('/activities/' + activityId);
+            if (!res.ok) throw new Error('加载失败');
+
+            const activity = await res.json();
+            renderPoster(activity);
+        } catch (e) {
+            console.error(e);
+            posterContent.innerHTML = '<div class="error">加载活动信息失败，请稍后重试</div>';
+        }
+    }
+
+    function renderPoster(activity) {
+        posterTitle.textContent = activity.title || '活动宣传';
+
+        const startTime = formatTime(activity.startTime);
+        const endTime = formatTime(activity.endTime);
+        const signupEnd = formatTime(activity.signupEndTime);
+
+        const isValid = checkSignupValid(activity);
+        const statusClass = isValid ? 'status-active' : 'status-expired';
+        const statusText = isValid ? '报名进行中' : '报名已结束';
+
+        // 使用后端生成的二维码
+        const baseUrl = window.location.origin;
+        const qrUrl = `/api/poster/qrcode/registration/${activityId}?baseUrl=${encodeURIComponent(baseUrl)}`;
+
+        posterContent.innerHTML = `
+                <div class="info-section">
+                    <div class="info-item">
+                        <span class="icon">📅</span>
+                        <div>
+                            <div><strong>活动时间</strong></div>
+                            <div>${startTime} 至 ${endTime}</div>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="icon">📍</span>
+                        <div>
+                            <div><strong>活动地点</strong></div>
+                            <div>${activity.location || '待定'}</div>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="icon">⏰</span>
+                        <div>
+                            <div><strong>报名截止</strong></div>
+                            <div>${signupEnd}</div>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="icon">👥</span>
+                        <div>
+                            <div><strong>报名情况</strong></div>
+                            <div>${activity.currentRegistrations || 0} / ${activity.maxParticipants || '不限'} 人</div>
+                        </div>
+                    </div>
+
+                    ${activity.description ? `
+                    <div class="info-item">
+                        <span class="icon">📝</span>
+                        <div>
+                            <div><strong>活动简介</strong></div>
+                            <div>${activity.description}</div>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <div class="qr-section">
+                    <h3>扫码报名</h3>
+                    <div class="qr-box">
+                        <img id="qr-image" src="${qrUrl}" alt="报名二维码">
+                    </div>
+                    <div class="qr-tip">长按识别二维码或使用微信扫一扫</div>
+                    <div class="status-badge ${statusClass}">${statusText}</div>
+                </div>
+            `;
+    }
+
+    function formatTime(dateStr) {
+        if (!dateStr) return '-';
+        return dateStr.toString().replace('T', ' ').substring(0, 16);
+    }
+
+    function checkSignupValid(activity) {
+        if (activity.status !== 'OPEN' && activity.status !== '报名中') return false;
+        if (activity.signupEndTime && new Date() > new Date(activity.signupEndTime)) return false;
+        if (activity.endTime && new Date() > new Date(activity.endTime)) return false;
+        return true;
+    }
+</script>
+</body>
+</html>

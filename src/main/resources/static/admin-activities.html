@@ -12,7 +12,7 @@
 
         header {
             padding: 16px 32px;
-            background: #1677ff;
+            background: linear-gradient(135deg, #4f46e5, #9333ea);
             color: #fff;
             display: flex;
             align-items: center;
@@ -119,8 +119,8 @@
         }
 
         .toggle-btn {
-            border: 1px solid #1677ff;
-            color: #1677ff;
+            border: 1px solid #4f46e5;
+            color: #4f46e5;
             background: #fff;
             padding: 5px 12px;
             border-radius: 999px;
@@ -129,7 +129,7 @@
         }
 
         .toggle-btn.active {
-            background: #1677ff;
+            background: #4f46e5;
             color: #fff;
         }
 
@@ -153,23 +153,29 @@
         }
 
         .btn-primary {
-            background: #1677ff;
+            background: linear-gradient(135deg, #4f46e5, #9333ea);
             color: #fff;
         }
 
         .btn-primary:hover {
-            background: #165fcc;
-            box-shadow: 0 4px 10px rgba(22, 119, 255, 0.35);
+            background: linear-gradient(135deg, #4338ca, #7c3aed);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+        }
+
+        .btn-primary:disabled {
+            background: #b7b5f4;
+            cursor: not-allowed;
+            box-shadow: none;
         }
 
         .btn-outline {
             background: #fff;
-            color: #1677ff;
-            border: 1px solid #1677ff;
+            color: #4f46e5;
+            border: 1px solid #4f46e5;
         }
 
         .btn-outline:hover {
-            background: rgba(22, 119, 255, 0.06);
+            background: rgba(79, 70, 229, 0.08);
         }
 
         .btn-danger {
@@ -299,13 +305,11 @@
             font-size: 12px;
         }
 
-        /* ç”¨äºŽåªè¯»æ˜¾ç¤ºçš„åˆ›å»ºè€…ç”¨æˆ·åï¼Œä½¿ç”¨ç°è‰²è¡¨æ˜Žä¸å¯ä¿®æ”¹ */
         .readonly-field {
             color: #888;
             background: #f8f8f8;
         }
 
-        /* 详情弹窗 */
         .modal-mask {
             position: fixed;
             inset: 0;
@@ -390,7 +394,6 @@
 
 <main>
     <div class="layout">
-        <!-- 左：活动列表 -->
         <section class="card">
             <div class="card-title">活动列表</div>
             <div class="card-desc">
@@ -424,33 +427,29 @@
             </div>
 
             <div style="overflow-x: auto;">
-            <table>
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>活动名称</th>
-                    <th>类型</th>
-                    <th>时间</th>
-                    <th>地点</th>
-                    <th>状态</th>
-                    <th>报名上限</th>
-                    <th>已报名</th>
-                    <th>操作</th>
-                </tr>
-                </thead>
-                <tbody id="activities-tbody">
-                    <!-- JS 动态填充 -->
-                    </tbody>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>活动名称</th>
+                        <th>类型</th>
+                        <th>时间</th>
+                        <th>地点</th>
+                        <th>状态</th>
+                        <th>报名上限</th>
+                        <th>已报名</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="activities-tbody"></tbody>
                 </table>
             </div>
 
             <div id="list-message" class="message"></div>
         </section>
-
     </div>
 </main>
 
-<!-- 详情弹窗 -->
 <div id="detail-modal-mask" class="modal-mask">
     <div class="modal" role="dialog" aria-modal="true">
         <div class="modal-header">
@@ -497,9 +496,7 @@
         '已删除': 'DELETED'
     };
 
-    // 登录态：当前管理员信息
     let currentUser = null;
-    // 活动缓存用于筛选
     let allActivities = [];
     let onlyMine = false;
     let keyword = '';
@@ -508,7 +505,6 @@
     let filterStart = '';
     let filterEnd = '';
 
-    // 尝试从 localStorage 中读取登录时保存的管理员信息
     function initCurrentUser() {
         const stored = localStorage.getItem('adminUser');
         if (stored) {
@@ -539,7 +535,7 @@
         }
         if (!isLoggedIn && toggleMyActivitiesBtn) {
             toggleMyActivitiesBtn.disabled = true;
-            toggleMyActivitiesBtn.title = '登录后可筛选“我的活动”';
+            toggleMyActivitiesBtn.title = '登录后可筛选"我的活动"';
         }
     }
 
@@ -553,7 +549,6 @@
     function formatDateTime(dt) {
         if (!dt) return '';
         try {
-            // 如果后端返回的是 ISO 字符串，简单截断到 分钟部分
             return dt.toString().replace('T', ' ').substring(0, 16);
         } catch (e) {
             return dt;
@@ -597,44 +592,44 @@
         const createdTime = formatDateTime(data.createdTime);
         const normalizedStatus = normalizeStatus(data.status);
         const now = new Date();
-        let registerLink = '';
         let posterLink = '';
+        let checkinLink = '';
         const canSignUp = normalizedStatus === 'OPEN'
             && data.signupEndTime
             && now <= new Date(data.signupEndTime);
         if (canSignUp) {
-            registerLink = `<a href="/register.html?activityId=${data.activityId ?? ''}" target="_blank">打开报名页</a>`;
-            posterLink = `<a href="/poster.html?activityId=${data.activityId ?? ''}" target="_blank">查看海报</a>`;
+            posterLink = '<a href="/poster-enhanced.html?activityId=' + (data.activityId || '') + '" target="_blank">查看报名页</a>';
         } else {
             const reason = normalizedStatus === 'OPEN'
                 ? '报名已截止，链接关闭'
                 : normalizedStatus === 'DRAFT'
                     ? '未开放报名'
                     : '报名已结束';
-            const greyText = `<span style="color:#999;">${reason}</span>`;
-            registerLink = greyText;
+            const greyText = '<span style="color:#999;">' + reason + '</span>';
             posterLink = greyText;
         }
+        checkinLink = data.activityId
+            ? '<a href="/checkin-qrcode.html?activityId=' + data.activityId + '" target="_blank">查看签到页</a>'
+            : '<span style="color:#999;">活动未保存</span>';
 
-        detailList.innerHTML = `
-            <li><span class="detail-key">ID</span><span class="detail-value">${data.activityId ?? ''}</span></li>
-            <li><span class="detail-key">活动名称</span><span class="detail-value">${data.title || ''}</span></li>
-            <li><span class="detail-key">类型</span><span class="detail-value">${data.type || ''}</span></li>
-            <li><span class="detail-key">时间</span><span class="detail-value">${startEnd}</span></li>
-            <li><span class="detail-key">地点</span><span class="detail-value">${data.location || ''}</span></li>
-            <li><span class="detail-key">状态</span><span class="detail-value">${getStatusLabel(data.status)}</span></li>
-            <li><span class="detail-key">报名截止</span><span class="detail-value">${signupEnd}</span></li>
-            <li><span class="detail-key">报名上限</span><span class="detail-value">${data.maxParticipants ?? '不限'}</span></li>
-            <li><span class="detail-key">已报名人数</span><span class="detail-value">${data.currentRegistrations ?? '加载中'}</span></li>
-            <li><span class="detail-key">直播链接</span><span class="detail-value">${data.liveUrl ? `<a href="${data.liveUrl}" target="_blank">${data.liveUrl}</a>` : ''}</span></li>
-            <li><span class="detail-key">附件链接</span><span class="detail-value">${data.attachmentUrl ? `<a href="${data.attachmentUrl}" target="_blank">${data.attachmentUrl}</a>` : ''}</span></li>
-            <li><span class="detail-key">标签</span><span class="detail-value">${data.tags || ''}</span></li>
-            <li><span class="detail-key">创建人</span><span class="detail-value">${data.createdByName || data.createdBy || ''}</span></li>
-            <li><span class="detail-key">创建时间</span><span class="detail-value">${createdTime}</span></li>
-            <li><span class="detail-key">简介</span><span class="detail-value">${data.description || ''}</span></li>
-            <li><span class="detail-key">宣传海报</span><span class="detail-value">${posterLink}</span></li>
-            <li><span class="detail-key">报名链接</span><span class="detail-value">${registerLink}</span></li>
-        `;
+        detailList.innerHTML =
+            '<li><span class="detail-key">ID</span><span class="detail-value">' + (data.activityId || '') + '</span></li>' +
+            '<li><span class="detail-key">活动名称</span><span class="detail-value">' + (data.title || '') + '</span></li>' +
+            '<li><span class="detail-key">类型</span><span class="detail-value">' + (data.type || '') + '</span></li>' +
+            '<li><span class="detail-key">时间</span><span class="detail-value">' + startEnd + '</span></li>' +
+            '<li><span class="detail-key">地点</span><span class="detail-value">' + (data.location || '') + '</span></li>' +
+            '<li><span class="detail-key">状态</span><span class="detail-value">' + getStatusLabel(data.status) + '</span></li>' +
+            '<li><span class="detail-key">报名截止</span><span class="detail-value">' + signupEnd + '</span></li>' +
+            '<li><span class="detail-key">报名上限</span><span class="detail-value">' + (data.maxParticipants !== null && data.maxParticipants !== undefined ? data.maxParticipants : '不限') + '</span></li>' +
+            '<li><span class="detail-key">已报名人数</span><span class="detail-value">' + (data.currentRegistrations !== null && data.currentRegistrations !== undefined ? data.currentRegistrations : '加载中') + '</span></li>' +
+            '<li><span class="detail-key">直播链接</span><span class="detail-value">' + (data.liveUrl ? '<a href="' + data.liveUrl + '" target="_blank">' + data.liveUrl + '</a>' : '') + '</span></li>' +
+            '<li><span class="detail-key">附件链接</span><span class="detail-value">' + (data.attachmentUrl ? '<a href="' + data.attachmentUrl + '" target="_blank">' + data.attachmentUrl + '</a>' : '') + '</span></li>' +
+            '<li><span class="detail-key">标签</span><span class="detail-value">' + (data.tags || '') + '</span></li>' +
+            '<li><span class="detail-key">创建人</span><span class="detail-value">' + (data.createdByName || data.createdBy || '') + '</span></li>' +
+            '<li><span class="detail-key">创建时间</span><span class="detail-value">' + createdTime + '</span></li>' +
+            '<li><span class="detail-key">简介</span><span class="detail-value">' + (data.description || '') + '</span></li>' +
+            '<li><span class="detail-key">报名页</span><span class="detail-value">' + posterLink + '</span></li>' +
+            '<li><span class="detail-key">签到页</span><span class="detail-value">' + checkinLink + '</span></li>';
     }
 
     async function viewActivityDetail(id) {
@@ -658,10 +653,10 @@
 
     function renderActivities(list) {
         if (!Array.isArray(list) || list.length === 0) {
-        activitiesSummary.textContent = '当前暂无活动记录。';
-        activitiesTbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">暂无活动，请点击右上角“新建活动”。</td></tr>';
-        return;
-    }
+            activitiesSummary.textContent = '当前暂无活动记录。';
+            activitiesTbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;">暂无活动，请点击右上角"新建活动"。</td></tr>';
+            return;
+        }
 
         activitiesSummary.textContent = '共 ' + list.length + ' 条活动。';
         const myUserId = currentUser && currentUser.userId != null ? Number(currentUser.userId) : null;
@@ -672,35 +667,34 @@
             const creatorId = item.createdBy != null ? Number(item.createdBy) : null;
             const isOwner = myUserId != null && creatorId != null && myUserId === creatorId;
             const deleteBtn = isOwner
-                ? `<button class="btn btn-danger" onclick="deleteActivity(${item.activityId}, ${item.createdBy ?? 'null'})">删除</button>`
+                ? '<button class="btn btn-danger" onclick="deleteActivity(' + item.activityId + ',' + (item.createdBy !== null && item.createdBy !== undefined ? item.createdBy : 'null') + ')">删除</button>'
                 : '';
             const publishBtn = (isOwner && item.status === 'DRAFT')
-                ? `<button class="btn btn-primary" onclick="publishActivity(${item.activityId})">发布</button>`
+                ? '<button class="btn btn-primary" onclick="publishActivity(' + item.activityId + ')">发布</button>'
                 : '';
             const editBtn = isOwner
-                ? `<button class="btn btn-outline" onclick="editActivity(${item.activityId})">编辑</button>`
+                ? '<button class="btn btn-outline" onclick="editActivity(' + item.activityId + ')">编辑</button>'
                 : '';
             const currentCount = item.currentRegistrations != null ? item.currentRegistrations : 0;
             const maxCount = item.maxParticipants != null ? item.maxParticipants : '';
 
-            return `
-                <tr>
-                    <td>${item.activityId}</td>
-                    <td>${item.title || ''}</td>
-                    <td>${item.type || ''}</td>
-                    <td>${startEnd}</td>
-                    <td>${item.location || ''}</td>
-                    <td>${statusHtml}</td>
-                    <td>${maxCount}</td>
-                    <td>${currentCount}</td>
-                    <td>
-                        <button class="btn btn-outline" onclick="viewActivityDetail(${item.activityId})">详情</button>
-                        ${editBtn}
-                        ${publishBtn}
-                        ${deleteBtn}
-                    </td>
-                </tr>
-            `;
+            return '<tr>' +
+                '<td>' + item.activityId + '</td>' +
+                '<td>' + (item.title || '') + '</td>' +
+                '<td>' + (item.type || '') + '</td>' +
+                '<td>' + startEnd + '</td>' +
+                '<td>' + (item.location || '') + '</td>' +
+                '<td>' + statusHtml + '</td>' +
+                '<td>' + maxCount + '</td>' +
+                '<td>' + currentCount + '</td>' +
+                '<td>' +
+                '<button class="btn btn-outline" onclick="viewActivityDetail(' + item.activityId + ')">详情</button>' +
+                '<button class="btn btn-outline" onclick="viewStatistics(' + item.activityId + ')">统计</button>' +
+                editBtn +
+                publishBtn +
+                deleteBtn +
+                '</td>' +
+                '</tr>';
         }).join('');
 
         activitiesTbody.innerHTML = rows;
@@ -756,7 +750,7 @@
                 : [];
             if (allActivities.length === 0) {
                 activitiesSummary.textContent = '当前暂无活动记录。';
-                activitiesTbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">暂无活动，请在右侧创建新活动。</td></tr>';
+                activitiesTbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;">暂无活动，请在右侧创建新活动。</td></tr>';
                 return;
             }
             applyFilters();
@@ -777,7 +771,7 @@
         if (!confirm('确认删除活动 ID=' + id + ' 吗？此操作不可恢复。')) return;
 
         try {
-            const res = await fetch(`/activities/${id}?requesterId=${encodeURIComponent(myUserId)}`, {
+            const res = await fetch('/activities/' + id + '?requesterId=' + encodeURIComponent(myUserId), {
                 method: 'DELETE'
             });
 
@@ -802,7 +796,7 @@
             alert('仅允许发布自己创建的活动。');
             return;
         }
-        if (!confirm('确认将该活动发布为“报名中”状态？')) return;
+        if (!confirm('确认将该活动发布为"报名中"状态？')) return;
 
         const payload = {
             ...target,
@@ -810,7 +804,7 @@
         };
 
         try {
-            const res = await fetch(`/activities/${id}?requesterId=${encodeURIComponent(myUserId)}`, {
+            const res = await fetch('/activities/' + id + '?requesterId=' + encodeURIComponent(myUserId), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -829,46 +823,49 @@
     }
 
     function editActivity(id) {
-        window.location.href = `/admin-create-activity.html?activityId=${encodeURIComponent(id)}`;
+        window.location.href = '/admin-create-activity.html?activityId=' + encodeURIComponent(id);
+    }
+
+    function viewStatistics(id) {
+        window.location.href = '/statistics.html?activityId=' + encodeURIComponent(id);
     }
 
     refreshBtn.addEventListener('click', loadActivities);
     detailModalMask.addEventListener('click', (e) => {
         if (e.target === detailModalMask) closeDetailModal();
     });
-    toggleMyActivitiesBtn?.addEventListener('click', () => {
+    toggleMyActivitiesBtn && toggleMyActivitiesBtn.addEventListener('click', () => {
         onlyMine = !onlyMine;
         toggleMyActivitiesBtn.classList.toggle('active', onlyMine);
         applyFilters();
     });
-    searchBtn?.addEventListener('click', () => {
+    searchBtn && searchBtn.addEventListener('click', () => {
         keyword = searchInput.value || '';
         applyFilters();
     });
-    searchInput?.addEventListener('keyup', (e) => {
+    searchInput && searchInput.addEventListener('keyup', (e) => {
         if (e.key === 'Enter') {
             keyword = searchInput.value || '';
             applyFilters();
         }
     });
-    filterTypeSelect?.addEventListener('change', () => {
+    filterTypeSelect && filterTypeSelect.addEventListener('change', () => {
         filterType = filterTypeSelect.value || '';
         applyFilters();
     });
-    filterStatusSelect?.addEventListener('change', () => {
+    filterStatusSelect && filterStatusSelect.addEventListener('change', () => {
         filterStatus = filterStatusSelect.value || '';
         applyFilters();
     });
-    filterStartInput?.addEventListener('change', () => {
+    filterStartInput && filterStartInput.addEventListener('change', () => {
         filterStart = filterStartInput.value || '';
         applyFilters();
     });
-    filterEndInput?.addEventListener('change', () => {
+    filterEndInput && filterEndInput.addEventListener('change', () => {
         filterEnd = filterEndInput.value || '';
         applyFilters();
     });
 
-    // 先初始化当前登录管理员，再加载活动列表
     initCurrentUser();
     loadActivities();
 

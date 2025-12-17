@@ -41,4 +41,20 @@ public interface RegistrationMapper {
             order by created_time desc
             """)
     List<Registration> findByActivityId(Integer activityId);
+
+    @Select("""
+            select registration_id as registrationId,
+                   activity_id as activityId,
+                   name,
+                   phone,
+                   school,
+                   college,
+                   clazz,
+                   student_no as studentNo,
+                   email,
+                   created_time as createdTime
+            from registration
+            where registration_id = #{registrationId}
+            """)
+    Registration findById(Integer registrationId);
 }

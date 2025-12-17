@@ -12,11 +12,6 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class ActivityServiceImpl implements ActivityService {
     private final ActivityMapper activityMapper;
-    private static final String STATUS_DRAFT = "DRAFT";
-    private static final String STATUS_OPEN = "OPEN";
-    private static final String STATUS_CLOSED = "CLOSED";
-    private static final String STATUS_FINISHED = "FINISHED";
-    private static final String STATUS_DELETED = "DELETED";
 
     public ActivityServiceImpl(ActivityMapper activityMapper) {
         this.activityMapper = activityMapper;
@@ -40,9 +35,7 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public Activity createActivity(Activity activity) {
         if (activity.getStatus() == null || activity.getStatus().isBlank()) {
-            activity.setStatus(STATUS_DRAFT);
-        } else {
-            activity.setStatus(normalizeStatus(activity.getStatus()));
+            activity.setStatus("未发布");
         }
         validateActivityTime(activity, true);
         activityMapper.insert(activity);
@@ -50,18 +43,7 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public Activity updateActivity(Activity activity, Integer requesterId) {
-        if (activity == null || activity.getActivityId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "活动ID不能为空");
-        }
-        Activity existing = activityMapper.findById(activity.getActivityId());
-        if (existing == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "活动不存在");
-        }
-        if (existing.getCreatedBy() == null || requesterId == null || !existing.getCreatedBy().equals(requesterId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "仅允许编辑自己创建的活动");
-        }
-        activity.setCreatedBy(existing.getCreatedBy());
+    public Activity updateActivity(Activity activity) {
         validateActivityTime(activity, false);
         activityMapper.update(activity);
         return refreshStatus(activityMapper.findById(activity.getActivityId()));
@@ -77,7 +59,7 @@ public class ActivityServiceImpl implements ActivityService {
                 || !existing.getCreatedBy().equals(requesterId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "仅允许删除自己创建的活动");
         }
-        activityMapper.updateStatusById(id, STATUS_DELETED);
+        activityMapper.updateStatusById(id, "已删除");
     }
 
     private void validateActivityTime(Activity activity, boolean enforceFutureStart) {
@@ -106,27 +88,33 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     /**
-     * 自动根据时间流转状态码。
+     * 按规则自动流转状态：
+     * - 已删除：保持
+     * - 结束时间已过：已结束
+     * - 报名截止时间已过：已截止
+     * 其余保持原状态（未发布/报名中等）。
      */
     private Activity refreshStatus(Activity activity) {
         if (activity == null) return null;
-        String originalStatus = activity.getStatus();
-        String current = normalizeStatus(originalStatus);
-        if (current != null && !current.equals(originalStatus)) {
-            activityMapper.updateStatusById(activity.getActivityId(), current);
-            activity.setStatus(current);
-        }
-        if (STATUS_DELETED.equals(current)) {
+        String current = activity.getStatus();
+        String normalized = normalizeStatus(current);
+        if ("已删除".equals(normalized)) {
+            if (!"已删除".equals(current)) {
+                activityMapper.updateStatusById(activity.getActivityId(), "已删除");
+                activity.setStatus("已删除");
+            }
             return activity;
         }
         LocalDateTime now = LocalDateTime.now();
-        String newStatus = current;
+        String newStatus = normalized;
         if (activity.getEndTime() != null && now.isAfter(activity.getEndTime())) {
-            newStatus = STATUS_FINISHED;
+            newStatus = "已结束";
         } else if (activity.getSignupEndTime() != null && now.isAfter(activity.getSignupEndTime())) {
-            newStatus = STATUS_CLOSED;
+            newStatus = "已截止";
+        } else if ("已截止".equals(normalized) || "已结束".equals(normalized)) {
+            newStatus = "报名中";
         }
-        if (newStatus != null && !newStatus.equals(current)) {
+        if (!newStatus.equals(current)) {
             activityMapper.updateStatusById(activity.getActivityId(), newStatus);
             activity.setStatus(newStatus);
         }
@@ -138,11 +126,11 @@ public class ActivityServiceImpl implements ActivityService {
             return status;
         }
         return switch (status) {
-            case "未发布" -> STATUS_DRAFT;
-            case "报名中" -> STATUS_OPEN;
-            case "已截止" -> STATUS_CLOSED;
-            case "已结束" -> STATUS_FINISHED;
-            case "已删除" -> STATUS_DELETED;
+            case "DRAFT" -> "未发布";
+            case "OPEN" -> "报名中";
+            case "CLOSED" -> "已截止";
+            case "FINISHED" -> "已结束";
+            case "DELETED" -> "已删除";
             default -> status;
         };
     }

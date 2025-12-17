@@ -4,6 +4,7 @@ spring:
     username: campus_app
     password: Campus123!
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   flyway:
     enabled: false
   jackson:

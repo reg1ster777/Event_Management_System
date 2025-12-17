@@ -7,4 +7,6 @@ public interface CheckinService {
     Checkin doCheckin(Integer regId, String location);
 
     List<Checkin> listByRegId(Integer regId);
+
+    List<Checkin> listByActivityId(Integer activityId);
 }

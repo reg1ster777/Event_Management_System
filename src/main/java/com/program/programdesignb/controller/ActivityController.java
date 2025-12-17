@@ -38,11 +38,9 @@ public class ActivityController {
     }
 
     @PutMapping("/{id}")
-    public Activity update(@PathVariable Integer id,
-                           @RequestParam("requesterId") Integer requesterId,
-                           @RequestBody Activity activity) {
+    public Activity update(@PathVariable Integer id, @RequestBody Activity activity) {
         activity.setActivityId(id);
-        return activityService.updateActivity(activity, requesterId);
+        return activityService.updateActivity(activity);
     }
 
     @DeleteMapping("/{id}")

@@ -16,8 +16,6 @@ import org.springframework.web.server.ResponseStatusException;
 public class RegistrationServiceImpl implements RegistrationService {
     private final RegistrationMapper registrationMapper;
     private final ActivityMapper activityMapper;
-    private static final String STATUS_OPEN = "OPEN";
-    private static final String STATUS_FINISHED = "FINISHED";
 
     public RegistrationServiceImpl(RegistrationMapper registrationMapper, ActivityMapper activityMapper) {
         this.registrationMapper = registrationMapper;
@@ -26,17 +24,15 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     @Override
     public Registration register(Integer activityId, Registration registration) {
-        sanitizeRegistration(registration);
-        ensureRequiredFields(registration);
-
         Activity activity = activityMapper.findById(activityId);
         if (activity == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "活动不存在");
         }
 
         // 状态与截止校验
-        String currentStatus = normalizeStatus(activity.getStatus());
-        if (!STATUS_OPEN.equals(currentStatus)) {
+        String status = activity.getStatus();
+// 允许两种状态值：中文"报名中"或英文"OPEN"
+        if (!"报名中".equals(status) && !"OPEN".equals(status)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "当前活动不在报名中，无法报名");
         }
         LocalDateTime now = LocalDateTime.now();
@@ -73,60 +69,6 @@ public class RegistrationServiceImpl implements RegistrationService {
         registration.setCreatedTime(now);
         registrationMapper.insert(registration);
         return registration;
-    }
-
-    private void sanitizeRegistration(Registration registration) {
-        if (registration == null) return;
-        registration.setName(trim(registration.getName()));
-        registration.setPhone(trim(registration.getPhone()));
-        registration.setStudentNo(trim(registration.getStudentNo()));
-        registration.setSchool(trim(registration.getSchool()));
-        registration.setCollege(trim(registration.getCollege()));
-        registration.setClazz(trim(registration.getClazz()));
-        registration.setEmail(trim(registration.getEmail()));
-    }
-
-    private void ensureRequiredFields(Registration registration) {
-        if (registration == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "报名信息不能为空");
-        }
-        if (!StringUtils.hasText(registration.getName())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "姓名为必填项");
-        }
-        if (!StringUtils.hasText(registration.getPhone())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "手机号为必填项");
-        }
-        if (!StringUtils.hasText(registration.getStudentNo())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "学号为必填项");
-        }
-        if (!isDigits(registration.getPhone())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "手机号只能包含数字");
-        }
-        if (!isDigits(registration.getStudentNo())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "学号只能包含数字");
-        }
-    }
-
-    private String trim(String value) {
-        return value == null ? null : value.trim();
-    }
-
-    private boolean isDigits(String value) {
-        return value != null && value.matches("\\d+");
-    }
-
-    private String normalizeStatus(String status) {
-        if (status == null || status.isBlank()) {
-            return status;
-        }
-        return switch (status) {
-            case "未发布" -> "DRAFT";
-            case "报名中" -> STATUS_OPEN;
-            case "已截止" -> "CLOSED";
-            case "已结束" -> STATUS_FINISHED;
-            case "已删除" -> "DELETED";
-            default -> status;
-        };
     }
 
     @Override
