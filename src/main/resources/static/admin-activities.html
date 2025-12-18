@@ -594,6 +594,9 @@
         const now = new Date();
         let posterLink = '';
         let checkinLink = '';
+        const myUserId = currentUser && currentUser.userId != null ? Number(currentUser.userId) : null;
+        const ownerId = data.createdBy != null ? Number(data.createdBy) : null;
+        const isOwner = myUserId != null && ownerId != null && myUserId === ownerId;
         const canSignUp = normalizedStatus === 'OPEN'
             && data.signupEndTime
             && now <= new Date(data.signupEndTime);
@@ -608,9 +611,17 @@
             const greyText = '<span style="color:#999;">' + reason + '</span>';
             posterLink = greyText;
         }
-        checkinLink = data.activityId
-            ? '<a href="/checkin-qrcode.html?activityId=' + data.activityId + '" target="_blank">查看签到页</a>'
-            : '<span style="color:#999;">活动未保存</span>';
+        if (!data.activityId) {
+            checkinLink = '<span style="color:#999;">活动未保存</span>';
+        } else if (!isOwner) {
+            checkinLink = '<span style="color:#999;">仅创建者可查看签到二维码</span>';
+        } else if (normalizedStatus === 'DRAFT') {
+            checkinLink = '<span style="color:#999;">发布后才能生成签到二维码</span>';
+        } else if (normalizedStatus === 'FINISHED' || normalizedStatus === 'DELETED') {
+            checkinLink = '<span style="color:#999;">活动已结束，二维码不可用</span>';
+        } else {
+            checkinLink = '<a href="/checkin-qrcode.html?activityId=' + data.activityId + '" target="_blank">查看签到页</a>';
+        }
 
         detailList.innerHTML =
             '<li><span class="detail-key">ID</span><span class="detail-value">' + (data.activityId || '') + '</span></li>' +
