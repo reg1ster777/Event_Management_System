@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
@@ -39,6 +40,10 @@ public class PosterController {
         Activity activity = activityService.getActivityById(activityId);
         if (activity == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "活动不存在");
+        }
+
+        if (!isRegistrationWindowOpen(activity)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "当前不在报名时间范围内，无法生成二维码");
         }
 
         // 生成带token的报名链接
@@ -104,5 +109,20 @@ public class PosterController {
         }
 
         return result;
+    }
+
+    private boolean isRegistrationWindowOpen(Activity activity) {
+        if (activity == null) {
+            return false;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (activity.getSignupEndTime() != null && now.isAfter(activity.getSignupEndTime())) {
+            return false;
+        }
+        String status = activity.getStatus();
+        if (status == null || status.isBlank()) {
+            return true;
+        }
+        return "报名中".equals(status) || "OPEN".equals(status);
     }
 }

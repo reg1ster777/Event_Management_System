@@ -161,8 +161,29 @@
         const statusText = isValid ? '报名进行中' : '报名已结束';
 
         // 使用后端生成的二维码
-        const baseUrl = window.location.origin;
-        const qrUrl = `/api/poster/qrcode/registration/${activityId}?baseUrl=${encodeURIComponent(baseUrl)}`;
+        let qrSectionHtml = '';
+        if (isValid) {
+            const baseUrl = window.location.origin;
+            const qrUrl = `/api/poster/qrcode/registration/${activityId}?baseUrl=${encodeURIComponent(baseUrl)}`;
+            qrSectionHtml = `
+                <div class="qr-section">
+                    <h3>扫码报名</h3>
+                    <div class="qr-box">
+                        <img id="qr-image" src="${qrUrl}" alt="报名二维码">
+                    </div>
+                    <div class="qr-tip">长按识别二维码或使用微信扫一扫</div>
+                    <div class="status-badge ${statusClass}">${statusText}</div>
+                </div>
+            `;
+        } else {
+            qrSectionHtml = `
+                <div class="qr-section">
+                    <h3>报名二维码</h3>
+                    <div class="status-badge ${statusClass}">${statusText}</div>
+                    <div class="qr-tip">报名未开放或已结束，暂不提供二维码</div>
+                </div>
+            `;
+        }
 
         posterContent.innerHTML = `
                 <div class="info-section">
@@ -208,15 +229,7 @@
                     </div>
                     ` : ''}
                 </div>
-
-                <div class="qr-section">
-                    <h3>扫码报名</h3>
-                    <div class="qr-box">
-                        <img id="qr-image" src="${qrUrl}" alt="报名二维码">
-                    </div>
-                    <div class="qr-tip">长按识别二维码或使用微信扫一扫</div>
-                    <div class="status-badge ${statusClass}">${statusText}</div>
-                </div>
+                ${qrSectionHtml}
             `;
     }
 

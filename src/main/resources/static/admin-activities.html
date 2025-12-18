@@ -689,6 +689,10 @@
             const currentCount = item.currentRegistrations != null ? item.currentRegistrations : 0;
             const maxCount = item.maxParticipants != null ? item.maxParticipants : '';
 
+            const statisticsBtn = isOwner
+                ? '<button class="btn btn-outline" onclick="viewStatistics(' + item.activityId + ')">统计</button>'
+                : '';
+
             return '<tr>' +
                 '<td>' + item.activityId + '</td>' +
                 '<td>' + (item.title || '') + '</td>' +
@@ -700,7 +704,7 @@
                 '<td>' + currentCount + '</td>' +
                 '<td>' +
                 '<button class="btn btn-outline" onclick="viewActivityDetail(' + item.activityId + ')">详情</button>' +
-                '<button class="btn btn-outline" onclick="viewStatistics(' + item.activityId + ')">统计</button>' +
+                statisticsBtn +
                 editBtn +
                 publishBtn +
                 deleteBtn +

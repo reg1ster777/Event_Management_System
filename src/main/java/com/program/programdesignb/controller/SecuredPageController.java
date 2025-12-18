@@ -29,6 +29,36 @@ public class SecuredPageController {
 
     @GetMapping(value = "/checkin-qrcode.html", produces = MediaType.TEXT_HTML_VALUE)
     public ResponseEntity<Resource> checkinPage(@RequestParam Integer activityId, HttpSession session) throws IOException {
+        ResponseEntity<Resource> guard = guardActivityAccess(activityId, session,
+                "未找到该活动，无法生成签到二维码",
+                "仅活动创建者可以查看签到二维码");
+        if (guard != null) {
+            return guard;
+        }
+        ClassPathResource html = new ClassPathResource("static/checkin-qrcode.html");
+        return ResponseEntity.ok()
+                .contentType(Objects.requireNonNull(MediaType.TEXT_HTML))
+                .body(html);
+    }
+
+    @GetMapping(value = "/statistics.html", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<Resource> statisticsPage(@RequestParam Integer activityId, HttpSession session) throws IOException {
+        ResponseEntity<Resource> guard = guardActivityAccess(activityId, session,
+                "未找到该活动，无法查看统计信息",
+                "仅活动创建者可以查看统计页面");
+        if (guard != null) {
+            return guard;
+        }
+        ClassPathResource html = new ClassPathResource("static/statistics.html");
+        return ResponseEntity.ok()
+                .contentType(Objects.requireNonNull(MediaType.TEXT_HTML))
+                .body(html);
+    }
+
+    private ResponseEntity<Resource> guardActivityAccess(Integer activityId,
+                                                         HttpSession session,
+                                                         String notFoundMessage,
+                                                         String forbidMessage) {
         Integer adminId = (Integer) session.getAttribute(AdminUserController.SESSION_ADMIN_ID);
         if (adminId == null) {
             HttpHeaders headers = new HttpHeaders();
@@ -37,16 +67,13 @@ public class SecuredPageController {
         }
         Activity activity = activityService.getActivityById(activityId);
         if (activity == null) {
-            return forbiddenResponse("未找到该活动，无法生成签到二维码");
+            return forbiddenResponse(notFoundMessage);
         }
         Integer ownerId = activity.getCreatedBy();
         if (ownerId == null || !ownerId.equals(adminId)) {
-            return forbiddenResponse("仅活动创建者可以查看签到二维码");
+            return forbiddenResponse(forbidMessage);
         }
-        ClassPathResource html = new ClassPathResource("static/checkin-qrcode.html");
-        return ResponseEntity.ok()
-                .contentType(Objects.requireNonNull(MediaType.TEXT_HTML))
-                .body(html);
+        return null;
     }
 
     private ResponseEntity<Resource> forbiddenResponse(String message) {
