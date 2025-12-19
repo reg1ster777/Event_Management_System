@@ -6,27 +6,18 @@
     <style>
         body {
             margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-            background: #f5f5f5;
         }
         header {
             padding: 16px 32px;
-            background: linear-gradient(135deg, #4f46e5, #9333ea);
-            color: #fff;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         main {
             padding: 24px 32px 32px;
         }
         .card {
-            background: #fff;
-            border-radius: 10px;
             padding: 18px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-            border: 1px solid rgba(0, 0, 0, 0.03);
             max-width: 720px;
             margin: 0 auto;
         }
@@ -68,7 +59,6 @@
             padding: 10px 14px;
             border-radius: 8px;
             border: none;
-            background: linear-gradient(135deg, #4f46e5, #9333ea);
             color: #fff;
             font-size: 14px;
             cursor: pointer;
@@ -81,17 +71,18 @@
         .message.success { color: #0b9a42; }
         .readonly-field { color: #888; background: #f8f8f8; }
     </style>
+    <link rel="stylesheet" href="/theme.css?v=2">
 </head>
 <body>
 <header>
-    <div>
-        <div style="font-size:18px;font-weight:600;">新建活动</div>
-        <div style="font-size:12px;opacity:.9;">填写信息并提交，默认状态为“未发布”</div>
+    <div class="left">
+        <div class="title">新建活动</div>
+        <div class="subtitle">填写信息并提交，默认状态为“未发布”</div>
     </div>
-    <div style="display:flex;gap:10px;align-items:center;font-size:13px;">
+    <div class="nav-links">
         <span id="header-admin-name">当前管理员：--</span>
-        <a href="/admin-activities.html" style="color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,0.7);padding:4px 10px;border-radius:999px;">返回活动列表</a>
-        <a href="/index.html" style="color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,0.7);padding:4px 10px;border-radius:999px;">返回首页</a>
+        <a href="/admin-activities.html">返回活动列表</a>
+        <a href="/index.html">返回首页</a>
     </div>
 </header>
 

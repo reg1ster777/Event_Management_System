@@ -8,9 +8,6 @@
         /* 整体布局样式 */
         body {
             margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-            background: linear-gradient(135deg, #f5f7ff, #fefefe);
-            color: #222;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -18,9 +15,6 @@
 
         header {
             padding: 18px 32px;
-            background: #1677ff;
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -56,27 +50,6 @@
             white-space: nowrap;
         }
 
-        .header-right button,
-        .header-right a {
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            padding: 4px 10px;
-            border-radius: 999px;
-            background: transparent;
-            color: #fff;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 13px;
-        }
-
-        .header-right button:hover,
-        .header-right a:hover {
-            background: rgba(0, 0, 0, 0.15);
-        }
-
-        .header-right button:focus-visible {
-            outline: 2px solid #fff;
-        }
-
         main {
             flex: 1;
             display: flex;
@@ -86,11 +59,12 @@
         }
 
         .container {
-            max-width: 960px;
+            max-width: 1080px;
             width: 100%;
             display: flex;
             flex-wrap: wrap;
-            gap: 24px;
+            gap: 32px;
+            padding: 12px;
         }
 
         .intro {
@@ -129,15 +103,11 @@
             flex: 1 1 320px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 20px;
         }
 
         .card {
-            background: #fff;
-            border-radius: 10px;
-            padding: 18px 18px 16px;
-            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
-            border: 1px solid rgba(0, 0, 0, 0.04);
+            padding: 22px 22px 20px;
         }
 
         .card-title {
@@ -171,7 +141,6 @@
         }
 
         .btn-primary {
-            background: #1677ff;
             color: #fff;
         }
 
@@ -224,6 +193,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="/theme.css?v=2">
 </head>
 <body>
 <header>

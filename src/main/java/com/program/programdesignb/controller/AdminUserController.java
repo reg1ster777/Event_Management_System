@@ -3,7 +3,10 @@ package com.program.programdesignb.controller;
 import com.program.programdesignb.domain.AdminUser;
 import com.program.programdesignb.service.AdminUserService;
 import jakarta.servlet.http.HttpSession;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +38,20 @@ public class AdminUserController {
     @PostMapping("/logout")
     public void logout(HttpSession session) {
         session.invalidate();
+    }
+
+    @GetMapping("/me")
+    public Map<String, Object> me(HttpSession session) {
+        Integer userId = (Integer) session.getAttribute(SESSION_ADMIN_ID);
+        String username = (String) session.getAttribute(SESSION_ADMIN_NAME);
+        if (userId == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not logged in");
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("userId", userId);
+        result.put("username", username);
+        result.put("role", "admin");
+        return result;
     }
 
     @PostMapping("/create")

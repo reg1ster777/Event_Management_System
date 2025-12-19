@@ -6,20 +6,15 @@
     <style>
         body {
             margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-            background: #f5f5f5;
         }
 
         header {
             padding: 16px 32px;
-            background: linear-gradient(135deg, #4f46e5, #9333ea);
-            color: #fff;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
             flex-wrap: wrap;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         header .left {
@@ -43,27 +38,6 @@
             gap: 10px;
         }
 
-        header .nav-links a,
-        header .nav-links button {
-            color: #fff;
-            font-size: 13px;
-            text-decoration: none;
-            padding: 4px 10px;
-            border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            background: transparent;
-            cursor: pointer;
-        }
-
-        header .nav-links a:hover,
-        header .nav-links button:hover {
-            background: rgba(0, 0, 0, 0.08);
-        }
-
-        header .nav-links button {
-            line-height: 1.2;
-        }
-
         header .admin-info {
             font-size: 13px;
             opacity: 0.9;
@@ -78,11 +52,7 @@
         }
 
         .card {
-            background: #fff;
-            border-radius: 10px;
             padding: 16px 18px 18px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-            border: 1px solid rgba(0, 0, 0, 0.03);
         }
 
         .card-title {
@@ -153,7 +123,6 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #4f46e5, #9333ea);
             color: #fff;
         }
 
@@ -203,6 +172,14 @@
             border-bottom: 1px solid #eee;
             text-align: left;
             vertical-align: middle;
+        }
+
+        .action-cell {
+            display: inline-flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            padding-top: 4px;
         }
 
         th {
@@ -318,6 +295,14 @@
             align-items: center;
             justify-content: center;
             z-index: 1000;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            transition: backdrop-filter 0.35s ease, -webkit-backdrop-filter 0.35s ease, background 0.35s ease;
+            opacity: 0;
+        }
+
+        .modal-mask.active {
+            opacity: 1;
         }
 
         .modal {
@@ -327,6 +312,23 @@
             width: min(520px, 90vw);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
             border: 1px solid #eee;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            transform: translateY(4px) scale(0.98);
+            opacity: 0;
+        }
+
+        .modal-mask.active .modal {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        .modal-mask.closing {
+            opacity: 0;
+        }
+
+        .modal-mask.closing .modal {
+            transform: translateY(8px) scale(0.97);
+            opacity: 0;
         }
 
         .modal-header {
@@ -377,6 +379,7 @@
             flex: 1;
         }
     </style>
+    <link rel="stylesheet" href="/theme.css?v=2">
 </head>
 <body>
 <header>
@@ -505,7 +508,7 @@
     let filterStart = '';
     let filterEnd = '';
 
-    function initCurrentUser() {
+    async function initCurrentUser() {
         const stored = localStorage.getItem('adminUser');
         if (stored) {
             try {
@@ -513,6 +516,18 @@
             } catch (e) {
                 console.error(e);
                 currentUser = null;
+            }
+        }
+
+        if (!currentUser) {
+            try {
+                const res = await fetch('/admin/me');
+                if (res.ok) {
+                    currentUser = await res.json();
+                    localStorage.setItem('adminUser', JSON.stringify(currentUser));
+                }
+            } catch (e) {
+                console.warn('无法获取登录信息', e);
             }
         }
 
@@ -536,6 +551,9 @@
         if (!isLoggedIn && toggleMyActivitiesBtn) {
             toggleMyActivitiesBtn.disabled = true;
             toggleMyActivitiesBtn.title = '登录后可筛选"我的活动"';
+        } else if (toggleMyActivitiesBtn) {
+            toggleMyActivitiesBtn.disabled = false;
+            toggleMyActivitiesBtn.title = '';
         }
     }
 
@@ -578,10 +596,18 @@
 
     function openDetailModal() {
         detailModalMask.style.display = 'flex';
+        requestAnimationFrame(() => {
+            detailModalMask.classList.add('active');
+        });
     }
 
     function closeDetailModal() {
-        detailModalMask.style.display = 'none';
+        detailModalMask.classList.add('closing');
+        setTimeout(() => {
+            detailModalMask.classList.remove('active');
+            detailModalMask.classList.remove('closing');
+            detailModalMask.style.display = 'none';
+        }, 220);
         detailMessage.textContent = '';
         detailList.innerHTML = '';
     }
@@ -702,13 +728,13 @@
                 '<td>' + statusHtml + '</td>' +
                 '<td>' + maxCount + '</td>' +
                 '<td>' + currentCount + '</td>' +
-                '<td>' +
+                '<td><div class="action-cell">' +
                 '<button class="btn btn-outline" onclick="viewActivityDetail(' + item.activityId + ')">详情</button>' +
                 statisticsBtn +
                 editBtn +
                 publishBtn +
                 deleteBtn +
-                '</td>' +
+                '</div></td>' +
                 '</tr>';
         }).join('');
 
@@ -881,8 +907,8 @@
         applyFilters();
     });
 
-    initCurrentUser();
-    loadActivities();
+    initCurrentUser()
+        .finally(loadActivities);
 
 </script>
 </body>
