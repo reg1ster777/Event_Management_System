@@ -55,6 +55,23 @@ public class SecuredPageController {
                 .body(html);
     }
 
+    @GetMapping(value = "/admin-create-activity.html", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<Resource> adminCreateActivityPage(@RequestParam(required = false) Integer activityId,
+                                                            HttpSession session) throws IOException {
+        if (activityId != null) {
+            ResponseEntity<Resource> guard = guardActivityAccess(activityId, session,
+                    "未找到该活动，无法编辑",
+                    "仅活动创建者可以编辑该活动");
+            if (guard != null) {
+                return guard;
+            }
+        }
+        ClassPathResource html = new ClassPathResource("static/admin-create-activity.html");
+        return ResponseEntity.ok()
+                .contentType(Objects.requireNonNull(MediaType.TEXT_HTML))
+                .body(html);
+    }
+
     private ResponseEntity<Resource> guardActivityAccess(Integer activityId,
                                                          HttpSession session,
                                                          String notFoundMessage,

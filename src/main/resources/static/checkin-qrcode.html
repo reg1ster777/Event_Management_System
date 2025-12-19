@@ -153,7 +153,9 @@
                 '<div><strong>地点：</strong>' + (data.location || '待定') + '</div>' +
                 '<div><strong>签到有效期：</strong>' + formatDateTime(data.startTime) + ' - ' + formatDateTime(data.endTime) + '</div>';
             if (isExpired()) {
-                showExpiredState();
+                showUnavailableState('活动已结束');
+            } else if (isUnpublished()) {
+                showUnavailableState('活动未发布');
             } else {
                 expiredEl.style.display = 'none';
                 refreshBtn.disabled = false;
@@ -165,7 +167,11 @@
 
     function refreshQRCode() {
         if (!activityId || isExpired()) {
-            showExpiredState();
+            showUnavailableState('活动已结束');
+            return;
+        }
+        if (isUnpublished()) {
+            showUnavailableState('活动未发布');
             return;
         }
         const baseUrl = window.location.origin;
@@ -194,8 +200,14 @@
         return new Date() > new Date(activityData.endTime);
     }
 
-    function showExpiredState() {
+    function isUnpublished() {
+        if (!activityData || !activityData.status) return false;
+        return activityData.status === 'DRAFT' || activityData.status === '未发布';
+    }
+
+    function showUnavailableState(message) {
         qrBox.style.display = 'none';
+        expiredEl.textContent = message;
         expiredEl.style.display = 'block';
         refreshBtn.disabled = true;
         clearAutoRefresh();
