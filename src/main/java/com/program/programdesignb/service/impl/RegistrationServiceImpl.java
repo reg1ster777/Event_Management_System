@@ -29,6 +29,8 @@ public class RegistrationServiceImpl implements RegistrationService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "活动不存在");
         }
 
+        ensureRequiredFields(registration);
+
         // 状态与截止校验
         String status = activity.getStatus();
 // 允许两种状态值：中文"报名中"或英文"OPEN"
@@ -75,4 +77,20 @@ public class RegistrationServiceImpl implements RegistrationService {
     public List<Registration> listByActivity(Integer activityId) {
         return registrationMapper.findByActivityId(activityId);
     }
+
+    private void ensureRequiredFields(Registration registration) {
+        if (registration == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "报名信息不能为空");
+        }
+        if (!StringUtils.hasText(registration.getName())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "姓名为必填项");
+        }
+        if (!StringUtils.hasText(registration.getPhone())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "手机号为必填项");
+        }
+        if (!StringUtils.hasText(registration.getStudentNo())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "学号为必填项");
+        }
+    }
+
 }

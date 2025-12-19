@@ -75,10 +75,15 @@ public class PosterController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "活动不存在");
         }
 
-        // 生成带token的签到链接
+        Date now = new Date();
         Date startTime = Date.from(activity.getStartTime().atZone(ZoneId.systemDefault()).toInstant());
-        Date endTime = Date.from(activity.getEndTime().atZone(ZoneId.systemDefault()).toInstant());
-        String token = tokenUtil.generateCheckinToken(activityId, startTime, endTime);
+        Date eventEndTime = Date.from(activity.getEndTime().atZone(ZoneId.systemDefault()).toInstant());
+        if (now.after(eventEndTime)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "活动已结束，无法生成签到二维码");
+        }
+        long dynamicExpiry = Math.min(eventEndTime.getTime(), now.getTime() + 30_000);
+        Date shortExpire = new Date(dynamicExpiry);
+        String token = tokenUtil.generateCheckinToken(activityId, startTime, shortExpire);
 
         // 构建签到URL
         String base = (baseUrl != null && !baseUrl.isEmpty()) ? baseUrl : "http://localhost:8088";

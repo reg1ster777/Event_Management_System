@@ -90,4 +90,15 @@ public class TokenUtil {
         }
         return claims.get("activityId", Integer.class);
     }
+
+    /**
+     * 从token中获取类型
+     */
+    public String getTokenType(String token) {
+        Claims claims = parseToken(token);
+        if (claims == null) {
+            return null;
+        }
+        return claims.get("type", String.class);
+    }
 }

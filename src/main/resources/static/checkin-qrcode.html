@@ -125,6 +125,8 @@
     const refreshBtn = document.getElementById('refresh-btn');
     const backBtn = document.getElementById('back-btn');
 
+    const REFRESH_INTERVAL = 10000;
+    let refreshTimer = null;
     let activityData = null;
 
     if (!activityId) {
@@ -171,17 +173,20 @@
         qrImg.src = qrUrl;
         qrBox.style.display = 'flex';
         errorEl.style.display = 'none';
+        scheduleAutoRefresh();
     }
 
     function showError(msg) {
         errorEl.textContent = msg;
         errorEl.style.display = 'block';
         qrBox.style.display = 'none';
+        clearAutoRefresh();
     }
 
     function disableActions() {
         refreshBtn.disabled = true;
         backBtn.disabled = true;
+        clearAutoRefresh();
     }
 
     function isExpired() {
@@ -193,11 +198,24 @@
         qrBox.style.display = 'none';
         expiredEl.style.display = 'block';
         refreshBtn.disabled = true;
+        clearAutoRefresh();
     }
 
     function formatDateTime(value) {
         if (!value) return '-';
         return value.toString().replace('T', ' ').substring(0, 16);
+    }
+
+    function scheduleAutoRefresh() {
+        clearAutoRefresh();
+        refreshTimer = setTimeout(() => refreshQRCode(false), REFRESH_INTERVAL);
+    }
+
+    function clearAutoRefresh() {
+        if (refreshTimer) {
+            clearTimeout(refreshTimer);
+            refreshTimer = null;
+        }
     }
 </script>
 </body>

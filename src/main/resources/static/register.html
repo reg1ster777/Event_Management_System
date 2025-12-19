@@ -88,11 +88,13 @@
         </div>
         <div class="form-group">
             <label for="phone">手机号 *</label>
-            <input id="phone" name="phone" required placeholder="用于联系与查重">
+            <input id="phone" name="phone" required placeholder="用于联系与查重"
+                   inputmode="numeric" pattern="^[0-9]+$">
         </div>
         <div class="form-group">
             <label for="studentNo">学号 *</label>
-            <input id="studentNo" name="studentNo" placeholder="用于防止重复报名">
+            <input id="studentNo" name="studentNo" required placeholder="用于防止重复报名"
+                   inputmode="numeric" pattern="^[0-9]+$">
         </div>
         <div class="form-group">
             <label for="school">学校</label>
@@ -123,12 +125,32 @@
     const formMessage = document.getElementById('form-message');
     const pageTitle = document.getElementById('page-title');
     const registerState = document.getElementById('register-state');
+    const phoneInput = document.getElementById('phone');
+    const studentNoInput = document.getElementById('studentNo');
+
+    function limitInputToDigits(field) {
+        if (!field) return;
+        field.addEventListener('input', () => {
+            const filtered = field.value.replace(/\D+/g, '');
+            if (filtered !== field.value) {
+                field.value = filtered;
+            }
+        });
+    }
+
+    limitInputToDigits(phoneInput);
+    limitInputToDigits(studentNoInput);
 
     const params = new URLSearchParams(window.location.search);
     const activityId = params.get('activityId');
+    const token = params.get('token');
 
     if (!activityId) {
         activityInfo.textContent = '缺少活动ID，无法报名。请通过正确的报名链接进入。';
+        form.style.display = 'none';
+    }
+    if (!token) {
+        activityInfo.textContent = '报名链接缺少有效token，无法报名。';
         form.style.display = 'none';
     }
 
@@ -196,7 +218,7 @@
     // }
 
     async function loadActivity() {
-        if (!activityId) return;
+        if (!activityId || !token) return;
         try {
             const res = await fetch('/activities/' + activityId);
             if (!res.ok) {
@@ -287,11 +309,25 @@
             college: document.getElementById('college').value.trim(),
             clazz: document.getElementById('clazz').value.trim(),
             studentNo: document.getElementById('studentNo').value.trim(),
-            email: document.getElementById('email').value.trim()
+            email: document.getElementById('email').value.trim(),
+            token: token
         };
 
-        if (!payload.name || !payload.phone) {
-            showFormMessage('姓名和手机号为必填项。', 'error');
+        if (!payload.name || !payload.phone || !payload.studentNo) {
+            showFormMessage('姓名、手机号、学号均为必填项。', 'error');
+            return;
+        }
+        if (!token) {
+            showFormMessage('报名链接缺少有效token，无法报名。', 'error');
+            return;
+        }
+        const digitRegex = /^\d+$/;
+        if (!digitRegex.test(payload.phone)) {
+            showFormMessage('手机号只能输入数字。', 'error');
+            return;
+        }
+        if (!digitRegex.test(payload.studentNo)) {
+            showFormMessage('学号只能输入数字。', 'error');
             return;
         }
 
@@ -309,10 +345,21 @@
                 form.reset();
             } else {
                 const text = await res.text();
-                if (text && text.includes('报名人数已满')) {
+                const errMsg = parseErrorMessage(text);
+                if (errMsg.includes('报名码')) {
+                    showFormMessage(errMsg, 'error');
+                } else if (errMsg.includes('人数') && errMsg.includes('已满')) {
                     showFormMessage('报名人数已满', 'error');
+                } else if (errMsg.includes('手机号')) {
+                    showFormMessage('该手机号已报名，无需重复提交', 'error');
+                } else if (errMsg.includes('学号')) {
+                    showFormMessage('该学号已报名，无需重复提交', 'error');
+                } else if (errMsg.includes('报名截止')) {
+                    showFormMessage('报名已截止，无法继续报名。', 'error');
+                } else if (errMsg) {
+                    showFormMessage(errMsg, 'error');
                 } else {
-                    showFormMessage('报名失败：' + text, 'error');
+                    showFormMessage('报名失败，请稍后再试。', 'error');
                 }
             }
         } catch (err) {
@@ -323,6 +370,22 @@
             submitBtn.textContent = '提交报名';
         }
     });
+
+    function parseErrorMessage(raw) {
+        if (!raw) return '';
+        try {
+            const json = JSON.parse(raw);
+            if (json && typeof json.message === 'string') {
+                return json.message;
+            }
+            if (json && typeof json.error === 'string') {
+                return json.error;
+            }
+        } catch (e) {
+            // ignore json parse error
+        }
+        return raw;
+    }
 
     loadActivity();
 </script>
