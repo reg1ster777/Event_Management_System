@@ -1,7 +1,7 @@
 # ProgramDesignB 校园活动管理平台
 
 ## 远程网站
-http://39.98.87.220/
+http://39.98.87.220/（目前已关闭）
 
 ## 项目概述
 - 基于 Spring Boot + MyBatis + MySQL 的后端，提供活动、报名、签到、管理员帐号等 REST API。
